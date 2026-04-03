@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "ast.h"
 #include "utils.h"
 #include "token.h"
 
@@ -11,8 +12,9 @@ int main(int argc, char* argv[])
     if (source_code == NULL) ERROR("unable to read file\n");
 
     TokenList tl = tokenize(source_code);
-    for (size_t i = 0; i < tl.count; i++)
-    {
-        print_token(tl.tokens[i]);
-    }
+    /* for (size_t i = 0; i < tl.count; i++) */
+    /* { */
+    /*     print_token(tl.tokens[i]); */
+    /* } */
+    parse(tl);
 }

@@ -1,3 +1,4 @@
+
 cmake_minimum_required(VERSION 3.15)
 project(mute)
 
@@ -31,6 +32,7 @@ endif()
 add_executable(${PROJECT_NAME}
   ${CMAKE_CURRENT_LIST_DIR}/src/main.c
   ${CMAKE_CURRENT_LIST_DIR}/src/token.c
+  ${CMAKE_CURRENT_LIST_DIR}/src/parser.c
   ${CMAKE_CURRENT_LIST_DIR}/src/utils.c)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${BUILD_TYPE})

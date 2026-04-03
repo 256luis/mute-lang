@@ -5,9 +5,13 @@
 #include "token.h"
 #include "utils.h"
 
-#define TOKEN_LIST_START_CAPACITY 10
-#define TOKEN_LIST_GROWTH_RATE 2
+// Starting capacity of TokenList
+#define TL_START_CAPACITY 10
 
+// TokenList growth rate
+#define TL_GROWTH_RATE 2
+
+// Enum containing the different states of the tokenizer
 typedef enum State
 {
     STATE_START,
@@ -17,24 +21,24 @@ typedef enum State
     STATE_STRING,
 } State;
 
-TokenList token_list_new()
+TokenList tl_new()
 {
     TokenList token_list = {
-        .tokens = MALLOC(TOKEN_LIST_START_CAPACITY * sizeof(Token)),
-        .capacity = TOKEN_LIST_START_CAPACITY,
+        .tokens = MALLOC(TL_START_CAPACITY * sizeof(Token)),
+        .capacity = TL_START_CAPACITY,
         .count = 0,
     };
 
     return token_list;
 }
 
-void token_list_append(TokenList* tl, Token token)
+void tl_append(TokenList* tl, Token token)
 {
     // if not enough capacity
     if ((tl->count + 1) > tl->capacity )
     {
         // expand array
-        size_t new_capacity = tl->capacity * TOKEN_LIST_GROWTH_RATE;
+        size_t new_capacity = tl->capacity * TL_GROWTH_RATE;
         tl->tokens = REALLOC(tl->tokens, new_capacity * sizeof(Token));
         tl->capacity = new_capacity;
     }
@@ -44,7 +48,7 @@ void token_list_append(TokenList* tl, Token token)
 }
 
 #define TOK_SPECIAL_SYMBOLS_START TOK_ARROW
-char* reserved_symbols[] = {
+static char* reserved_symbols[] = {
     [TOK_ROUTINE]     = "routine",
     [TOK_FUNC]        = "func",
     [TOK_PROC]        = "proc",
@@ -93,7 +97,15 @@ char* reserved_symbols[] = {
     [TOK_RSHIFT]      = ">>",
 };
 
-Token make_token(char* symbol, int line, int column)
+/*
+  Turns a string into a Token. Use this function AFTER grouping characters together.
+
+  Parameters:
+  - char* symbol - the string to tokenize
+  - int line     - line where the string was found
+  - int column   - column where the string was found
+*/
+static Token make_token(char* symbol, int line, int column)
 {
     Token token = {
         .line = line,
@@ -132,7 +144,7 @@ Token make_token(char* symbol, int line, int column)
 // this function is very bad and ugly
 TokenList tokenize(char* source_code)
 {
-    TokenList token_list = token_list_new();
+    TokenList token_list = tl_new();
     char symbol_buffer[MAX_SYMBOL_LENGTH] = {0};
     size_t symbol_buffer_length = 0;
 
@@ -258,7 +270,7 @@ TokenList tokenize(char* source_code)
             symbol_buffer[symbol_buffer_length] = 0;
             symbol_buffer_length = 0;
             Token token = make_token(symbol_buffer, line, column);
-            token_list_append(&token_list, token);
+            tl_append(&token_list, token);
             state = STATE_START;
             i--; // reprocess this char
             continue;
@@ -273,7 +285,7 @@ TokenList tokenize(char* source_code)
                 .column = column
             };
             strcpy(token.string, symbol_buffer);
-            token_list_append(&token_list, token);
+            tl_append(&token_list, token);
             state = STATE_START;
             continue;
         }
@@ -290,9 +302,6 @@ TokenList tokenize(char* source_code)
 
 void print_token(Token t)
 {
-    int a = 10;
-    a <<= 3;
-
     switch (t.kind)
     {
         case TOK_IDENT: printf("IDENT: "); break;
