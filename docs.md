@@ -26,37 +26,42 @@ the final binary.
 
 Compiling to C allows us to leverage optimizations present in C compilers.
 
+## Memory management strategy
+Memory will not be freed. This is a short-lived program. Let the OS free the memory
+once the program ends.
+
 ## Feature checklist
+> Legend: ✅ Done - ⏳ In progress - ⬜ Not started
 
 ### Parsing
 
 #### L/RValues
-| Type                | Status      |
-|---------------------|-------------|
-| Literals            | Done        |
-| Identifiers         | Done        |
-| Binary expressions  | Not started |
-| Unary expressions   | Not started |
-| Routine calls       | Not started |
-| Routine definitions | Not started |
-| Array initializer   | Not started |
-| Array index         | Not started |
-| Struct initializer  | Not started |
-| Field access        | Not started |
-| If-expressions      | Not started |
-| Match-expressions   | Not started |
-| Struct definitions  | Not started |
-| Enum definitions    | Not started |
+| Type                | Status | Remarks                                        |
+|---------------------|:------:|------------------------------------------------|
+| Literals            |   ✅   |                                                |
+| Identifiers         |   ✅   |                                                |
+| Binary expressions  |   ⏳   | Operator precedence is currently unimplemented |
+| Unary expressions   |   ⬜   |                                                |
+| Routine calls       |   ⬜   |                                                |
+| Routine definitions |   ⬜   |                                                |
+| Array initializer   |   ⬜   |                                                |
+| Array index         |   ⬜   |                                                |
+| Struct initializer  |   ⬜   |                                                |
+| Field access        |   ⬜   |                                                |
+| If-expressions      |   ⬜   |                                                |
+| Match-expressions   |   ⬜   |                                                |
+| Struct definitions  |   ⬜   |                                                |
+| Enum definitions    |   ⬜   |                                                |
 
 #### Statements
-| Type                  | Status      |
-|-----------------------|-------------|
-| Variable declarations | Not started |
-| Variable reassignment | Not started |
-| Constant declarations | Not started |
-| Routine declarations  | Not started |
-| Type aliases          | Not started |
-| If-statements         | Not started |
-| Match-statements      | Not started |
-| While-loops           | Not started |
-| For-loops             | Not started |
+| Type                  | Status | Remarks |
+|-----------------------|:------:|---------|
+| Variable declarations |   ⬜   |         |
+| Variable reassignment |   ⬜   |         |
+| Constant declarations |   ⬜   |         |
+| Routine declarations  |   ⬜   |         |
+| Type aliases          |   ⬜   |         |
+| If-statements         |   ⬜   |         |
+| Match-statements      |   ⬜   |         |
+| While-loops           |   ⬜   |         |
+| For-loops             |   ⬜   |         |

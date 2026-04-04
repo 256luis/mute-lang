@@ -16,5 +16,6 @@ int main(int argc, char* argv[])
     /* { */
     /*     print_token(tl.tokens[i]); */
     /* } */
-    parse(tl);
+    AstNode* ast = parse(tl);
+    print_ast_node(*ast);
 }

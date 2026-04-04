@@ -7,12 +7,12 @@
 #define MAX_SYMBOL_LENGTH 256
 
 // The number of reserved symbols recognized by the tokenizer
-#define TOK_RESERVED_SYMBOL_COUNT (TOK_RSHIFT + 1)
+#define TOK_RESERVED_SYMBOL_COUNT (TOK_EQUAL + 1)
 
 // Enum containing different token kinds recognized by the tokenizer
 typedef enum TokenKind
 {
-    // reserved symbols
+    // reserved keywords
     TOK_ROUTINE,
     TOK_FUNC,
     TOK_PROC,
@@ -27,20 +27,13 @@ typedef enum TokenKind
     TOK_MATCH,
     TOK_FOR,
 
-    TOK_ARROW,
-    TOK_COMMA,
-    TOK_COLON,
+    // binary operators
     TOK_DOT,
-    TOK_LBRACKET, TOK_RBRACKET,
-    TOK_LBRACE, TOK_RBRACE,
-    TOK_LPAREN, TOK_RPAREN,
-    TOK_SEMICOLON,
-    TOK_EQUAL,
     TOK_AND,
+    TOK_LINE,
     TOK_PLUS,
-    TOK_DASH,
+    TOK_CARET,
     TOK_SLASH,
-    TOK_STAR,
     TOK_PERCENT,
     TOK_DOUBLEEQUAL,
     TOK_BANGEQUAL,
@@ -50,18 +43,33 @@ typedef enum TokenKind
     TOK_GREATEQUAL,
     TOK_DOUBLEAND,
     TOK_DOUBLELINE,
-    TOK_BANG,
-    TOK_LINE,
-    TOK_TILDE,
-    TOK_CARET,
     TOK_LSHIFT,
     TOK_RSHIFT,
+
+    // binary/unary operators
+    TOK_DASH,
+    TOK_STAR,
+
+    // unary operators
+    TOK_BANG,
+    TOK_TILDE,
+
+    // everything else
+    TOK_ARROW,
+    TOK_COMMA,
+    TOK_COLON,
+    TOK_LBRACKET, TOK_RBRACKET,
+    TOK_LBRACE, TOK_RBRACE,
+    TOK_LPAREN, TOK_RPAREN,
+    TOK_SEMICOLON,
+    TOK_EQUAL,
 
     // user defined
     TOK_IDENT,
     TOK_NUM,
     TOK_STRING,
 
+    TOK_EOF,
 } TokenKind;
 
 typedef struct Token

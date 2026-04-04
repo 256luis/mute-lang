@@ -47,7 +47,7 @@ void tl_append(TokenList* tl, Token token)
     tl->count++;
 }
 
-#define TOK_SPECIAL_SYMBOLS_START TOK_ARROW
+#define TOK_SPECIAL_SYMBOLS_START TOK_DOT
 static char* reserved_symbols[] = {
     [TOK_ROUTINE]     = "routine",
     [TOK_FUNC]        = "func",
@@ -63,23 +63,12 @@ static char* reserved_symbols[] = {
     [TOK_MATCH]       = "match",
     [TOK_FOR]         = "for",
 
-    [TOK_ARROW]       = "->",
-    [TOK_COMMA]       = ",",
-    [TOK_COLON]       = ":",
     [TOK_DOT]         = ".",
-    [TOK_LBRACKET]    = "[",
-    [TOK_RBRACKET]    = "]",
-    [TOK_LBRACE]      = "{",
-    [TOK_RBRACE]      = "}",
-    [TOK_LPAREN]      = "(",
-    [TOK_RPAREN]      = ")",
-    [TOK_SEMICOLON]   = ";",
-    [TOK_EQUAL]       = "=",
     [TOK_AND]         = "&",
+    [TOK_LINE]        = "|",
     [TOK_PLUS]        = "+",
-    [TOK_DASH]        = "-",
+    [TOK_CARET]       = "^",
     [TOK_SLASH]       = "/",
-    [TOK_STAR]        = "*",
     [TOK_PERCENT]     = "%",
     [TOK_DOUBLEEQUAL] = "==",
     [TOK_BANGEQUAL]   = "!=",
@@ -89,12 +78,26 @@ static char* reserved_symbols[] = {
     [TOK_GREATEQUAL]  = ">=",
     [TOK_DOUBLEAND]   = "&&",
     [TOK_DOUBLELINE]  = "||",
-    [TOK_BANG]        = "!",
-    [TOK_LINE]        = "|",
-    [TOK_TILDE]       = "~",
-    [TOK_CARET]       = "^",
     [TOK_LSHIFT]      = "<<",
     [TOK_RSHIFT]      = ">>",
+
+    [TOK_DASH]        = "-",
+    [TOK_STAR]        = "*",
+
+    [TOK_BANG]        = "!",
+    [TOK_TILDE]       = "~",
+
+    [TOK_ARROW]       = "->",
+    [TOK_COMMA]       = ",",
+    [TOK_COLON]       = ":",
+    [TOK_LBRACKET]    = "[",
+    [TOK_RBRACKET]    = "]",
+    [TOK_LBRACE]      = "{",
+    [TOK_RBRACE]      = "}",
+    [TOK_LPAREN]      = "(",
+    [TOK_RPAREN]      = ")",
+    [TOK_SEMICOLON]   = ";",
+    [TOK_EQUAL]       = "=",
 };
 
 /*
@@ -296,6 +299,19 @@ TokenList tokenize(char* source_code)
             symbol_buffer_length++;
         }
     }
+
+    symbol_buffer[symbol_buffer_length] = 0;
+    Token last_token = make_token(symbol_buffer, line, column);
+    tl_append(&token_list, last_token);
+
+    Token eof = {
+        .kind = TOK_EOF,
+        .string = "<EOF>",
+        .line = line,
+        .column = column,
+    };
+
+    tl_append(&token_list, eof);
 
     return token_list;
 }
