@@ -71,6 +71,21 @@
                  (TokenKind[]){ __VA_ARGS__ },\
                  sizeof((TokenKind[]){ __VA_ARGS__ })/sizeof(TokenKind))
 
+/*
+  Checks if a string of tokens starting from the current token matches the provided
+  pattern of tokens.
+
+  Parameters:
+  - Parser* p - parser object
+  - ...       - list of TokenKinds to match
+
+  Returns true if the pattern matches. False otherwise.
+*/
+#define CHECK_TOKEN_PATTERN(p, ...)\
+    _check_token_pattern(p,\
+                   (TokenKind[]){ __VA_ARGS__ },\
+                   sizeof((TokenKind[]){ __VA_ARGS__ })/sizeof(TokenKind))
+
 // Parser struct containing information about the current parsing context
 typedef struct Parser
 {
@@ -90,6 +105,33 @@ static void advance(Parser* p)
 static Token current_token(Parser* p)
 {
     return p->tl.tokens[p->index];
+}
+
+/*
+  Returns the nth token starting from the current token
+
+  Parameters:
+  - Parser* p - parser
+  - int n     - the offset from the current token
+*/
+static Token nth_token(Parser* p, int n)
+{
+    return p->tl.tokens[p->index + n];
+}
+
+// dont use this function!!! use the CHECK_TOKEN_PATTERN macro
+static bool _check_token_pattern(Parser* p, TokenKind* tks, size_t tks_length)
+{
+    bool matches = true;
+    for (size_t i = 0; i < tks_length; i++)
+    {
+        if (nth_token(p, i).kind != tks[i])
+        {
+            matches = false;
+        }
+    }
+
+    return matches;
 }
 
 // dont use this function!!!!!!!!
@@ -144,7 +186,7 @@ static void anl_append(AstNodeList* anl, AstNode node)
 static AstNode* parse_rvalue(Parser* parser);
 
 /*
-  Parses a single term in an expression. Exressions enclosed in parentheses count
+  Parses a single term in an expression. Expressions enclosed in parentheses count
   as a single term.
 
   Parameters:
@@ -167,8 +209,24 @@ static AstNode* parse_term(Parser* p)
         case TOK_NUM:
         {
             rvalue = MALLOC(sizeof(AstNode));
-            rvalue->kind = ANK_INT;
-            rvalue->terminal = current_token(p);
+
+            // check if floating point
+            if(CHECK_TOKEN_PATTERN(p, TOK_NUM, TOK_DOT, TOK_NUM))
+            {
+                rvalue->kind = ANK_FLOAT;
+                rvalue->floating.whole = current_token(p);
+
+                advance(p);
+                advance(p);
+                rvalue->floating.fractional = current_token(p);
+            }
+            // must be int
+            else
+            {
+                // int
+                rvalue->kind = ANK_INT;
+                rvalue->terminal = current_token(p);
+            }
         } break;
 
         case TOK_STRING:
@@ -342,6 +400,11 @@ void print_ast_node(AstNode node)
         case ANK_IDENT:
         {
             printf("IDENT: %s", node.terminal.string);
+        } break;
+
+        case ANK_FLOAT:
+        {
+            printf("FLOAT: %s.%s", node.floating.whole.string, node.floating.fractional.string);
         } break;
 
         case ANK_BINARY:

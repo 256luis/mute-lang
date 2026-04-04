@@ -16,6 +16,7 @@ typedef enum AstNodeKind
     ANK_STRING,
     ANK_INT,
     ANK_BINARY,
+    ANK_FLOAT,
 
     // lvalue/rvalue
     ANK_IDENT,
@@ -63,8 +64,14 @@ typedef struct AstNode
 
     union
     {
-        // for ANK_IDENT, ANK_NUM, ANK_STRING
+        // for ANK_IDENT, ANK_INT, ANK_STRING
         Token terminal;
+
+        struct
+        {
+            Token whole;
+            Token fractional;
+        } floating;
 
         struct
         {
