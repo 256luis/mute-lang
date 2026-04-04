@@ -13,6 +13,10 @@
 #define BINARY_OPERATOR_TOKENS\
     TOK_DOT, TOK_AND, TOK_LINE, TOK_PLUS, TOK_CARET, TOK_SLASH, TOK_PERCENT, TOK_DOUBLEEQUAL, TOK_BANGEQUAL, TOK_LESS, TOK_LESSEQUAL, TOK_GREAT, TOK_GREATEQUAL, TOK_DOUBLEAND, TOK_DOUBLELINE, TOK_LSHIFT, TOK_RSHIFT
 
+// List of TokenKinds that could be the beginning of an rvalue expression
+#define RVALUE_STARTERS\
+    TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN
+
 /*
   Macro for more convenient implementation of language grammar. Reports error and
   exits if expectation is not met.
@@ -41,7 +45,6 @@
                 sizeof((TokenKind[]){ __VA_ARGS__ })/sizeof(TokenKind));\
         if (!result)\
         {\
-            print_token(t);\
             ERROR("unexpected symbol `%s` @ line %d\n", t.string, t.line);\
         }\
     } while(0)
@@ -138,27 +141,48 @@ static void anl_append(AstNodeList* anl, AstNode node)
     anl->count++;
 }
 
-static AstNode* parse_terminal(Parser* p)
+static AstNode* parse_rvalue(Parser* parser);
+
+/*
+  Parses a single term in an expression. Exressions enclosed in parentheses count
+  as a single term.
+
+  Parameters:
+  - Parser* p - parser
+
+  Returns an AstNode that is your expression.
+*/
+static AstNode* parse_term(Parser* p)
 {
-    AstNode* rvalue = MALLOC(sizeof(AstNode));
+    AstNode* rvalue = NULL;
     switch (current_token(p).kind)
     {
         case TOK_IDENT:
         {
+            rvalue = MALLOC(sizeof(AstNode));
             rvalue->kind = ANK_IDENT;
             rvalue->terminal = current_token(p);
         } break;
 
         case TOK_NUM:
         {
+            rvalue = MALLOC(sizeof(AstNode));
             rvalue->kind = ANK_INT;
             rvalue->terminal = current_token(p);
         } break;
 
         case TOK_STRING:
         {
+            rvalue = MALLOC(sizeof(AstNode));
             rvalue->kind = ANK_STRING;
             rvalue->terminal = current_token(p);
+        } break;
+
+        case TOK_LPAREN:
+        {
+            advance(p);
+            rvalue = parse_rvalue(p);
+            EXPECT_TOKEN(p, TOK_RPAREN);
         } break;
 
         default:
@@ -166,6 +190,8 @@ static AstNode* parse_terminal(Parser* p)
             UNREACHABLE();
         }
     }
+
+    ASSERT(rvalue != NULL);
 
     return rvalue;
 }
@@ -219,23 +245,7 @@ static BinaryOperator token_kind_to_binary_operator(TokenKind tk)
 */
 AstNode* parse_rvalue(Parser* p)
 {
-    AstNode* rvalue = NULL;
-    switch (current_token(p).kind)
-    {
-        case TOK_IDENT:
-        case TOK_NUM:
-        case TOK_STRING:
-        {
-            rvalue = parse_terminal(p);
-        } break;
-
-        default:
-        {
-            UNIMPLEMENTED();
-        }
-    }
-
-    ASSERT(rvalue != NULL);
+    AstNode* rvalue = parse_term(p);
 
     // TODO: operator precedence
 
@@ -250,8 +260,8 @@ AstNode* parse_rvalue(Parser* p)
         rvalue->binary.op_token = current_token(p);
 
         advance(p);
-        EXPECT_TOKEN(p, TOK_IDENT, TOK_NUM, TOK_STRING);
-        AstNode* right = parse_terminal(p);
+        EXPECT_TOKEN(p, RVALUE_STARTERS);
+        AstNode* right = parse_term(p);
 
         rvalue->binary.right = right;
         rvalue->binary.left = left;
