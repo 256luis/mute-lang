@@ -41,13 +41,12 @@ once the program ends.
 | Literals            |   ✅   |                                                |
 | Identifiers         |   ✅   |                                                |
 | Binary expressions  |   ⏳   | Operator precedence is currently unimplemented |
-| Unary expressions   |   ⬜   |                                                |
+| Unary expressions   |   ✅   |                                                |
 | Routine calls       |   ⬜   |                                                |
 | Routine definitions |   ⬜   |                                                |
 | Array initializer   |   ⬜   |                                                |
 | Array index         |   ⬜   |                                                |
 | Struct initializer  |   ⬜   |                                                |
-| Field access        |   ⬜   |                                                |
 | If-expressions      |   ⬜   |                                                |
 | Match-expressions   |   ⬜   |                                                |
 | Struct definitions  |   ⬜   |                                                |

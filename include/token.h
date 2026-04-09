@@ -45,10 +45,10 @@ typedef enum TokenKind
     TOK_DOUBLELINE,
     TOK_LSHIFT,
     TOK_RSHIFT,
+    TOK_STAR,
 
     // binary/unary operators
     TOK_DASH,
-    TOK_STAR,
 
     // unary operators
     TOK_BANG,

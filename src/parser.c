@@ -11,11 +11,11 @@
 
 // List of binary operator tokens to be used in the EXPECT macro
 #define BINARY_OPERATOR_TOKENS\
-    TOK_DOT, TOK_AND, TOK_LINE, TOK_PLUS, TOK_CARET, TOK_SLASH, TOK_PERCENT, TOK_DOUBLEEQUAL, TOK_BANGEQUAL, TOK_LESS, TOK_LESSEQUAL, TOK_GREAT, TOK_GREATEQUAL, TOK_DOUBLEAND, TOK_DOUBLELINE, TOK_LSHIFT, TOK_RSHIFT
+    TOK_DOT, TOK_AND, TOK_LINE, TOK_PLUS, TOK_CARET, TOK_SLASH, TOK_PERCENT, TOK_DOUBLEEQUAL, TOK_BANGEQUAL, TOK_LESS, TOK_LESSEQUAL, TOK_GREAT, TOK_GREATEQUAL, TOK_DOUBLEAND, TOK_DOUBLELINE, TOK_LSHIFT, TOK_RSHIFT, TOK_DASH
 
 // List of TokenKinds that could be the beginning of an rvalue expression
 #define RVALUE_STARTERS\
-    TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN
+    TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE
 
 /*
   Macro for more convenient implementation of language grammar. Reports error and
@@ -183,7 +183,31 @@ static void anl_append(AstNodeList* anl, AstNode node)
     anl->count++;
 }
 
+// forward declaration
 static AstNode* parse_rvalue(Parser* parser);
+
+/*
+  Converts a TokenKind into its corresponding UnaryOperator
+
+  Parameters:
+  - TokenKind tk - the TokenKind to turn into a UnaryOperator
+
+  Returns a UnaryOperator
+*/
+static UnaryOperator token_kind_to_unary_operator(TokenKind tk)
+{
+    static UnaryOperator map[] = {
+        [TOK_DASH] = UO_NEG,
+        [TOK_BANG] = UO_LOG_NOT,
+        [TOK_TILDE] = UO_BIT_NOT,
+    };
+
+    // TOK_DASH and TOK_TILDE are the starting and ending unary operator token kinds
+    // if this assertion fails, tk is not a unary token kind
+    ASSERT(tk >= TOK_DASH && tk <= TOK_TILDE);
+
+    return map[tk];
+}
 
 /*
   Parses a single term in an expression. Expressions enclosed in parentheses count
@@ -223,7 +247,6 @@ static AstNode* parse_term(Parser* p)
             // must be int
             else
             {
-                // int
                 rvalue->kind = ANK_INT;
                 rvalue->terminal = current_token(p);
             }
@@ -241,6 +264,21 @@ static AstNode* parse_term(Parser* p)
             advance(p);
             rvalue = parse_rvalue(p);
             EXPECT_TOKEN(p, TOK_RPAREN);
+        } break;
+
+        case TOK_DASH:
+        case TOK_BANG:
+        case TOK_TILDE:
+        {
+            rvalue = MALLOC(sizeof(AstNode));
+            rvalue->kind = ANK_UNARY;
+            rvalue->unary.op_token = current_token(p);
+            rvalue->unary.op = token_kind_to_unary_operator(current_token(p).kind);
+
+            advance(p);
+            EXPECT_TOKEN(p, RVALUE_STARTERS);
+
+            rvalue->unary.node = parse_term(p);
         } break;
 
         default:
@@ -282,12 +320,13 @@ static BinaryOperator token_kind_to_binary_operator(TokenKind tk)
         [TOK_DOUBLELINE] = BO_LOG_OR,
         [TOK_LSHIFT] = BO_BIT_LSHIFT,
         [TOK_RSHIFT] = BO_BIT_RSHIFT,
-        [TOK_DASH] = BO_SUB,
         [TOK_STAR] = BO_MUL,
+        [TOK_DASH] = BO_SUB,
     };
 
-    // TOK_DOT and TOK_STAR are the starting and ending binary operator token kinds
-    ASSERT(tk >= TOK_DOT && tk <= TOK_STAR);
+    // TOK_DOT and TOK_DASH are the starting and ending binary operator token kinds
+    // if this assertion fails, tk is not a binary token kind
+    ASSERT(tk >= TOK_DOT && tk <= TOK_DASH);
 
     return map[tk];
 }
@@ -301,7 +340,7 @@ static BinaryOperator token_kind_to_binary_operator(TokenKind tk)
 
   Returns an AstNode that is your rvalue.
 */
-AstNode* parse_rvalue(Parser* p)
+static AstNode* parse_rvalue(Parser* p)
 {
     AstNode* rvalue = parse_term(p);
 
@@ -423,6 +462,22 @@ void print_ast_node(AstNode node)
             printf("right: ");
             print_ast_node(*node.binary.right);
 
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_UNARY:
+        {
+            printf("UNARY {");
+            depth++;
+            NEWLINE();
+
+            printf("op: %s", node.unary.op_token.string);
+
+            NEWLINE();
+            printf("node: ");
+            print_ast_node(*node.unary.node);
 
             depth--;
             NEWLINE();

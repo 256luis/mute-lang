@@ -15,8 +15,9 @@ typedef enum AstNodeKind
     // just rvalue
     ANK_STRING,
     ANK_INT,
-    ANK_BINARY,
     ANK_FLOAT,
+    ANK_BINARY,
+    ANK_UNARY,
 
     // lvalue/rvalue
     ANK_IDENT,
@@ -56,6 +57,14 @@ typedef enum BinaryOperator
     BO_ACCESS,
 } BinaryOperator;
 
+typedef enum UnaryOperator
+{
+    UO_NEG,
+
+    UO_LOG_NOT,
+    UO_BIT_NOT,
+} UnaryOperator;
+
 // The primary node type
 typedef struct AstNode
 {
@@ -82,6 +91,15 @@ typedef struct AstNode
             // for error reporting and printing purposes
             Token op_token;
         } binary;
+
+        struct
+        {
+            UnaryOperator op;
+            AstNode* node;
+
+            // for error reporting and printing purposes
+            Token op_token;
+        } unary;
     };
 } AstNode;
 

@@ -30,7 +30,6 @@ Mute has the following primitive types
 | `char`  | UTF-8 character                      |
 | `bool`  | `true` or `false`                    |
 
-
 ## Arrays
 Arrays are fixed-sized collections of values of the same type. They take the form
 `[N]T` where `N` is a compile-time constant and `T` is a type.
@@ -72,23 +71,17 @@ let my_string = "Hello!";
 
 The type of `my_string` is `[6]char`.
 
-## Pointers
-Pointers are integers that specifically refer to locations in memory. These locations
-must contain values of a certain type.
+## References
+References can be used to alias existing variables. Any reassignment done to a
+reference will be reflected in the variable being referenced.
 
-Pointers take the form `&T` where `T` is the type.
+References take the form `&T` where `T` is the type.
 
-Use the `&` operator to get the address of a variable
+Use the `&` operator to make a reference to a variables
 ```
 let num = 10;
-let ptr = &num;
-# type of ptr is &int
-```
-
-Pointers can be dereferenced using the `*` operator.
-```
-let num2 = *ptr;
-# value of num2 is 10
+let ref = &num;
+# type of ref is &int
 ```
 
 ## Type aliases
@@ -325,49 +318,48 @@ be used skip the rest of the current iteration and proceed to the next one.
 ### Arithmetic
 | Operator | Description    | Types          |
 |:--------:|----------------|----------------|
-| `+`      | Addition       | `int`, `float` |
-| `-`      | Subtraction    | `int`, `float` |
-| `*`      | Multiplication | `int`, `float` |
-| `/`      | Division       | `int`, `float` |
-| `%`      | Modulo         | `int`          |
+|   `+`    | Addition       | `int`, `float` |
+|   `-`    | Subtraction    | `int`, `float` |
+|   `*`    | Multiplication | `int`, `float` |
+|   `/`    | Division       | `int`, `float` |
+|   `%`    | Modulo         | `int`          |
 
 ### Comparison
 | Operator | Description      | Types          |
 |:--------:|------------------|----------------|
-| `==`     | Equal            | All            |
-| `!=`     | Not equal        | All            |
-| `>`      | Greater          | `int`, `float` |
-| `>=`     | Greater or equal | `int`, `float` |
-| `<`      | Less             | `int`, `float` |
-| `<=`     | Less or equal    | `int`, `float` |
+|   `==`   | Equal            | All            |
+|   `!=`   | Not equal        | All            |
+|   `>`    | Greater          | `int`, `float` |
+|   `>=`   | Greater or equal | `int`, `float` |
+|   `<`    | Less             | `int`, `float` |
+|   `<=`   | Less or equal    | `int`, `float` |
 
 ### Logical
 | Operator | Description | Types  |
 |:--------:|-------------|--------|
-| `&&`     | Logical AND | `bool` |
-| `\|\|`   | Logical OR  | `bool` |
-| `!`      | Logical NOT | `bool` |
+|   `&&`   | Logical AND | `bool` |
+|  `\|\|`  | Logical OR  | `bool` |
+|   `!`    | Logical NOT | `bool` |
 
 ### Bitwise
 | Operator | Description | Types |
 |:--------:|-------------|-------|
-| `&`      | Bitwise AND | `int` |
-| `\|`     | Bitwise OR  | `int` |
-| `~`      | Bitwise NOT | `int` |
-| `^`      | Bitwise XOR | `int` |
-| `<<`     | Shift left  | `int` |
-| `>>`     | Shift right | `int` |
+|   `&`    | Bitwise AND | `int` |
+|   `\|`   | Bitwise OR  | `int` |
+|   `~`    | Bitwise NOT | `int` |
+|   `^`    | Bitwise XOR | `int` |
+|   `<<`   | Shift left  | `int` |
+|   `>>`   | Shift right | `int` |
 
 ### Pointer
-| Operator | Description | Types |
-|:--------:|-------------|-------|
-| `&`      | Address of  | All   |
-| `*`      | Dereference | `&T`  |
+| Operator | Description  | Types |
+|:--------:|--------------|-------|
+|   `&`    | Reference to | All   |
 
 ### Array
 | Operator | Description | Types |
 |:--------:|-------------|-------|
-| `[N]`    | Index       | `[]T` |
+|  `[N]`   | Index       | `[]T` |
 
 Mixing of types is not allowed i.e. adding a `float` to an `int` will yield a
 compile-time error. This is to ensure that all casts are intentional.
