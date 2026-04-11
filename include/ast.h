@@ -52,9 +52,6 @@ typedef enum BinaryOperator
     // comparison
     BO_CMP_EQ, BO_CMP_NEQ, BO_CMP_LESS,
     BO_CMP_LESSEQ, BO_CMP_GREAT, BO_CMP_GREATEQ,
-
-    // field access
-    BO_ACCESS,
 } BinaryOperator;
 
 typedef enum UnaryOperator

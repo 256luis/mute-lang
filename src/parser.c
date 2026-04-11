@@ -1,3 +1,4 @@
+
 #include <stdbool.h>
 #include "token.h"
 #include "ast.h"
@@ -11,7 +12,7 @@
 
 // List of binary operator tokens to be used in the EXPECT macro
 #define BINARY_OPERATOR_TOKENS\
-    TOK_DOT, TOK_AND, TOK_LINE, TOK_PLUS, TOK_CARET, TOK_SLASH, TOK_PERCENT, TOK_DOUBLEEQUAL, TOK_BANGEQUAL, TOK_LESS, TOK_LESSEQUAL, TOK_GREAT, TOK_GREATEQUAL, TOK_DOUBLEAND, TOK_DOUBLELINE, TOK_LSHIFT, TOK_RSHIFT, TOK_DASH
+    TOK_AND, TOK_LINE, TOK_PLUS, TOK_CARET, TOK_SLASH, TOK_PERCENT, TOK_DOUBLEEQUAL, TOK_BANGEQUAL, TOK_LESS, TOK_LESSEQUAL, TOK_GREAT, TOK_GREATEQUAL, TOK_DOUBLEAND, TOK_DOUBLELINE, TOK_LSHIFT, TOK_RSHIFT, TOK_DASH
 
 // List of TokenKinds that could be the beginning of an rvalue expression
 #define RVALUE_STARTERS\
@@ -185,6 +186,7 @@ static void anl_append(AstNodeList* anl, AstNode node)
 
 // forward declaration
 static AstNode* parse_rvalue(Parser* parser);
+static AstNode* parse_term(Parser* parser);
 
 /*
   Converts a TokenKind into its corresponding UnaryOperator
@@ -207,6 +209,21 @@ static UnaryOperator token_kind_to_unary_operator(TokenKind tk)
     ASSERT(tk >= TOK_DASH && tk <= TOK_TILDE);
 
     return map[tk];
+}
+
+static AstNode* parse_unary(Parser* p)
+{
+    AstNode* rvalue = MALLOC(sizeof(AstNode));
+    rvalue->kind = ANK_UNARY;
+    rvalue->unary.op_token = current_token(p);
+    rvalue->unary.op = token_kind_to_unary_operator(current_token(p).kind);
+
+    advance(p);
+    EXPECT_TOKEN(p, RVALUE_STARTERS);
+
+    rvalue->unary.node = parse_term(p);
+
+    return rvalue;
 }
 
 /*
@@ -270,15 +287,7 @@ static AstNode* parse_term(Parser* p)
         case TOK_BANG:
         case TOK_TILDE:
         {
-            rvalue = MALLOC(sizeof(AstNode));
-            rvalue->kind = ANK_UNARY;
-            rvalue->unary.op_token = current_token(p);
-            rvalue->unary.op = token_kind_to_unary_operator(current_token(p).kind);
-
-            advance(p);
-            EXPECT_TOKEN(p, RVALUE_STARTERS);
-
-            rvalue->unary.node = parse_term(p);
+            rvalue = parse_unary(p);
         } break;
 
         default:
@@ -303,7 +312,6 @@ static AstNode* parse_term(Parser* p)
 static BinaryOperator token_kind_to_binary_operator(TokenKind tk)
 {
     static BinaryOperator map[] = {
-        [TOK_DOT] = BO_ACCESS,
         [TOK_AND] = BO_BIT_AND,
         [TOK_LINE] = BO_BIT_OR,
         [TOK_PLUS] = BO_ADD,
@@ -324,9 +332,9 @@ static BinaryOperator token_kind_to_binary_operator(TokenKind tk)
         [TOK_DASH] = BO_SUB,
     };
 
-    // TOK_DOT and TOK_DASH are the starting and ending binary operator token kinds
+    // TOK_AND and TOK_DASH are the starting and ending binary operator token kinds
     // if this assertion fails, tk is not a binary token kind
-    ASSERT(tk >= TOK_DOT && tk <= TOK_DASH);
+    ASSERT(tk >= TOK_AND && tk <= TOK_DASH);
 
     return map[tk];
 }

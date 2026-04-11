@@ -28,7 +28,6 @@ typedef enum TokenKind
     TOK_FOR,
 
     // binary operators
-    TOK_DOT,
     TOK_AND,
     TOK_LINE,
     TOK_PLUS,
@@ -55,6 +54,7 @@ typedef enum TokenKind
     TOK_TILDE,
 
     // everything else
+    TOK_DOT,
     TOK_ARROW,
     TOK_COMMA,
     TOK_COLON,
