@@ -45,7 +45,7 @@ once the program ends.
 | Routine calls       |   ✅   |                                                |
 | Routine definitions |   ⬜   |                                                |
 | Array initializer   |   ⬜   |                                                |
-| Array index         |   ⬜   |                                                |
+| Array index         |   ✅   |                                                |
 | Struct initializer  |   ⬜   |                                                |
 | If-expressions      |   ⬜   |                                                |
 | Match-expressions   |   ⬜   |                                                |

@@ -21,6 +21,7 @@ typedef enum AstNodeKind
     ANK_FLOAT,
     ANK_BINARY,
     ANK_UNARY,
+    ANK_ARRAY_INDEX,
 
     // lvalue/rvalue
     ANK_IDENT,
@@ -115,6 +116,12 @@ typedef struct AstNode
             AstNode* routine;
             AstNodeList args;
         } routine_call;
+
+        struct
+        {
+            AstNode* array;
+            AstNode* index;
+        } array_index;
     };
 } AstNode;
 

@@ -227,8 +227,6 @@ static AstNode* parse_unary(Parser* p)
     rvalue->unary.op = token_kind_to_unary_operator(current_token(p).kind);
 
     advance(p);
-    EXPECT_TOKEN(p, RVALUE_STARTERS);
-
     rvalue->unary.node = parse_term(p);
 
     return rvalue;
@@ -251,6 +249,8 @@ static AstNode* parse_lvalue(Parser* p)
 */
 static AstNode* parse_term(Parser* p)
 {
+    EXPECT_TOKEN(p, RVALUE_STARTERS);
+
     AstNode* rvalue = NULL;
     switch (current_token(p).kind)
     {
@@ -310,7 +310,7 @@ static AstNode* parse_term(Parser* p)
         }
     }
 
-    if (CHECK_NTH_TOKEN(p, 1, TOK_DOT, TOK_LPAREN))
+    if (CHECK_NTH_TOKEN(p, 1, TOK_DOT, TOK_LPAREN, TOK_LBRACKET))
     {
         advance(p);
         switch (current_token(p).kind)
@@ -350,11 +350,26 @@ static AstNode* parse_term(Parser* p)
                     if (CHECK_TOKEN(p, TOK_COMMA))
                     {
                         advance(p);
-                        EXPECT_TOKEN(p, RVALUE_STARTERS);
                     }
                 }
 
                 // print_ast_node(rvalue->routine_call.args.nodes[0]);
+            } break;
+
+            // array index
+            case TOK_LBRACKET:
+            {
+                AstNode* array = rvalue;
+                rvalue = MALLOC(sizeof(AstNode));
+                rvalue->kind = ANK_ARRAY_INDEX;
+                rvalue->array_index.array = array;
+
+                advance(p);
+                rvalue->array_index.index = parse_rvalue(p);
+
+                // print_token(current_token(p));
+
+                EXPECT_TOKEN(p, TOK_RBRACKET);
             } break;
 
             default:
@@ -433,7 +448,6 @@ static AstNode* parse_rvalue(Parser* p)
         rvalue->binary.op_token = current_token(p);
 
         advance(p);
-        EXPECT_TOKEN(p, RVALUE_STARTERS);
         AstNode* right = parse_term(p);
 
         rvalue->binary.right = right;
@@ -589,18 +603,33 @@ void print_ast_node(AstNode node)
             NEWLINE();
             printf("args: [");
             depth++;
-            NEWLINE();
-
             for (size_t i = 0; i < node.routine_call.args.count; i++)
             {
+                NEWLINE();
                 AstNode arg = node.routine_call.args.nodes[i];
                 print_ast_node(arg);
-                NEWLINE();
             }
+            depth--;
+            if (node.routine_call.args.count > 0) NEWLINE();
+            printf("]");
 
             depth--;
             NEWLINE();
-            printf("]");
+            printf("}");
+        } break;
+
+        case ANK_ARRAY_INDEX:
+        {
+            printf("ARRAY INDEX {");
+            depth++;
+            NEWLINE();
+
+            printf("array: ");
+            print_ast_node(*node.array_index.array);
+
+            NEWLINE();
+            printf("index: ");
+            print_ast_node(*node.array_index.index);
 
             depth--;
             NEWLINE();
