@@ -16,6 +16,7 @@ if (MSVC)
     /D_CRT_SECURE_NO_WARNINGS)
 else()
   set(COMPILE_OPTIONS
+    -Wshadow
     -Wall
     -Wextra
     -Wpedantic

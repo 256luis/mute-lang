@@ -12,6 +12,9 @@ typedef enum AstNodeKind
     // base node kinds
     ANK_ROUTINE_DECLARATION,
 
+    // base/rvalue
+    ANK_ROUTINE_CALL,
+
     // just rvalue
     ANK_STRING,
     ANK_INT,
@@ -103,10 +106,15 @@ typedef struct AstNode
 
         struct
         {
-
             AstNode* owner;
             AstNode* field;
         } field_access;
+
+        struct
+        {
+            AstNode* routine;
+            AstNodeList args;
+        } routine_call;
     };
 } AstNode;
 

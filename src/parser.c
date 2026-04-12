@@ -1,5 +1,5 @@
-
 #include <stdbool.h>
+#include <string.h>
 #include "token.h"
 #include "ast.h"
 #include "utils.h"
@@ -310,7 +310,7 @@ static AstNode* parse_term(Parser* p)
         }
     }
 
-    if (CHECK_NTH_TOKEN(p, 1, TOK_DOT))
+    if (CHECK_NTH_TOKEN(p, 1, TOK_DOT, TOK_LPAREN))
     {
         advance(p);
         switch (current_token(p).kind)
@@ -326,6 +326,35 @@ static AstNode* parse_term(Parser* p)
                 advance(p);
 
                 rvalue->field_access.field = parse_lvalue(p);
+            } break;
+
+            // routine call
+            case TOK_LPAREN:
+            {
+                AstNode* routine = rvalue;
+                rvalue = MALLOC(sizeof(AstNode));
+                rvalue->kind = ANK_ROUTINE_CALL;
+                rvalue->routine_call.routine = routine;
+                rvalue->routine_call.args = anl_new();
+
+                advance(p);
+
+                // parse the args
+                while (!CHECK_TOKEN(p, TOK_RPAREN))
+                {
+                    AstNode* arg = parse_rvalue(p);
+                    anl_append(&rvalue->routine_call.args, *arg);
+
+                    EXPECT_TOKEN(p, TOK_COMMA, TOK_RPAREN);
+
+                    if (CHECK_TOKEN(p, TOK_COMMA))
+                    {
+                        advance(p);
+                        EXPECT_TOKEN(p, RVALUE_STARTERS);
+                    }
+                }
+
+                // print_ast_node(rvalue->routine_call.args.nodes[0]);
             } break;
 
             default:
@@ -458,7 +487,7 @@ void print_ast_node(AstNode node)
 #define NEWLINE()\
     do {\
         putchar('\n');\
-        for (int i = 0; i < depth; i++)\
+        for (int _i = 0; _i < depth; _i++)\
         {\
             printf("    ");\
         }\
@@ -542,6 +571,36 @@ void print_ast_node(AstNode node)
             NEWLINE();
             printf("field: ");
             print_ast_node(*node.field_access.field);
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_ROUTINE_CALL:
+        {
+            printf("ROUTINE CALL {");
+            depth++;
+            NEWLINE();
+
+            printf("routine: ");
+            print_ast_node(*node.routine_call.routine);
+
+            NEWLINE();
+            printf("args: [");
+            depth++;
+            NEWLINE();
+
+            for (size_t i = 0; i < node.routine_call.args.count; i++)
+            {
+                AstNode arg = node.routine_call.args.nodes[i];
+                print_ast_node(arg);
+                NEWLINE();
+            }
+
+            depth--;
+            NEWLINE();
+            printf("]");
 
             depth--;
             NEWLINE();

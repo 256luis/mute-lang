@@ -250,9 +250,9 @@ TokenList tokenize(char* source_code)
 
                     // check if one of reserved symbols
                     bool is_reserved_symbol = false;
-                    for (int i = TOK_SPECIAL_SYMBOLS_START; i < TOK_RESERVED_SYMBOL_COUNT; i++)
+                    for (int j = TOK_SPECIAL_SYMBOLS_START; j < TOK_RESERVED_SYMBOL_COUNT; j++)
                     {
-                        if(strcmp(symbol_buffer, reserved_symbols[i]) == 0)
+                        if(strcmp(symbol_buffer, reserved_symbols[j]) == 0)
                         {
                             is_reserved_symbol = true;
                         }
