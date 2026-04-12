@@ -18,6 +18,9 @@
 #define RVALUE_STARTERS\
     TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE
 
+#define LVALUE_STARTERS\
+    TOK_IDENT
+
 /*
   Macro for more convenient implementation of language grammar. Reports error and
   exits if expectation is not met.
@@ -41,7 +44,7 @@
 #define EXPECT_TOKEN(p, ...)\
     do {\
         Token t = current_token(p);\
-        bool result = _check_token(p,\
+        bool result = _check_nth_token(p, 0,\
                 (TokenKind[]){ __VA_ARGS__ },\
                 sizeof((TokenKind[]){ __VA_ARGS__ })/sizeof(TokenKind));\
         if (!result)\
@@ -68,7 +71,12 @@
     }
 */
 #define CHECK_TOKEN(p, ...)\
-    _check_token(p,\
+    _check_nth_token(p, 0,\
+                 (TokenKind[]){ __VA_ARGS__ },\
+                 sizeof((TokenKind[]){ __VA_ARGS__ })/sizeof(TokenKind))
+
+#define CHECK_NTH_TOKEN(p, n, ...)\
+    _check_nth_token(p, n,\
                  (TokenKind[]){ __VA_ARGS__ },\
                  sizeof((TokenKind[]){ __VA_ARGS__ })/sizeof(TokenKind))
 
@@ -136,9 +144,9 @@ static bool _check_token_pattern(Parser* p, TokenKind* tks, size_t tks_length)
 }
 
 // dont use this function!!!!!!!!
-static bool _check_token(Parser* p, TokenKind* tks, size_t tks_length)
+static bool _check_nth_token(Parser* p, int n, TokenKind* tks, size_t tks_length)
 {
-    Token t = current_token(p);
+    Token t = nth_token(p, n);
     for (size_t i = 0; i < tks_length; i++)
     {
         if (tks[i] == t.kind)
@@ -226,6 +234,12 @@ static AstNode* parse_unary(Parser* p)
     return rvalue;
 }
 
+static AstNode* parse_lvalue(Parser* p)
+{
+    CHECK_TOKEN(p, LVALUE_STARTERS);
+    return parse_term(p);
+}
+
 /*
   Parses a single term in an expression. Expressions enclosed in parentheses count
   as a single term.
@@ -293,6 +307,31 @@ static AstNode* parse_term(Parser* p)
         default:
         {
             UNREACHABLE();
+        }
+    }
+
+    if (CHECK_NTH_TOKEN(p, 1, TOK_DOT))
+    {
+        advance(p);
+        switch (current_token(p).kind)
+        {
+            // field access
+            case TOK_DOT:
+            {
+                AstNode* owner = rvalue;
+                rvalue = MALLOC(sizeof(AstNode));
+                rvalue->kind = ANK_FIELD_ACCESS;
+                rvalue->field_access.owner = owner;
+
+                advance(p);
+
+                rvalue->field_access.field = parse_lvalue(p);
+            } break;
+
+            default:
+            {
+                UNIMPLEMENTED();
+            }
         }
     }
 
@@ -486,6 +525,23 @@ void print_ast_node(AstNode node)
             NEWLINE();
             printf("node: ");
             print_ast_node(*node.unary.node);
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_FIELD_ACCESS:
+        {
+            printf("FIELD ACCESS {");
+            depth++;
+            NEWLINE();
+            printf("owner: ");
+            print_ast_node(*node.field_access.owner);
+
+            NEWLINE();
+            printf("field: ");
+            print_ast_node(*node.field_access.field);
 
             depth--;
             NEWLINE();

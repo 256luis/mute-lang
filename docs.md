@@ -51,6 +51,7 @@ once the program ends.
 | Match-expressions   |   ⬜   |                                                |
 | Struct definitions  |   ⬜   |                                                |
 | Enum definitions    |   ⬜   |                                                |
+| Field access        |   ✅   |                                                |
 
 #### Statements
 | Type                  | Status | Remarks |

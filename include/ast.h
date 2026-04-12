@@ -21,6 +21,9 @@ typedef enum AstNodeKind
 
     // lvalue/rvalue
     ANK_IDENT,
+
+    // sometimes valid lvalue, sometimes not
+    ANK_FIELD_ACCESS,
 } AstNodeKind;
 
 /*
@@ -97,6 +100,13 @@ typedef struct AstNode
             // for error reporting and printing purposes
             Token op_token;
         } unary;
+
+        struct
+        {
+
+            AstNode* owner;
+            AstNode* field;
+        } field_access;
     };
 } AstNode;
 
