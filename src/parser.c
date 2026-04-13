@@ -16,7 +16,7 @@
 
 // List of TokenKinds that could be the beginning of an rvalue expression
 #define RVALUE_STARTERS\
-    TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE
+    TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE, TOK_LBRACKET
 
 #define LVALUE_STARTERS\
     TOK_IDENT
@@ -304,77 +304,135 @@ static AstNode* parse_term(Parser* p)
             rvalue = parse_unary(p);
         } break;
 
+        // array type
+        case TOK_LBRACKET:
+        {
+            rvalue = MALLOC(sizeof(AstNode));
+            rvalue->kind = ANK_ARRAY_TYPE;
+            rvalue->array_type_node.size = NULL;
+
+            advance(p);
+
+            // size of array is optional
+            if (!CHECK_TOKEN(p, TOK_RBRACKET))
+            {
+                rvalue->array_type_node.size = parse_rvalue(p);
+                // advance(p);
+            }
+
+            EXPECT_TOKEN(p, TOK_RBRACKET);
+
+            advance(p);
+            rvalue->array_type_node.child_type_node = parse_rvalue(p);
+
+        } break;
+
         default:
         {
-            UNREACHABLE();
+            UNIMPLEMENTED();
         }
     }
 
     if (CHECK_NTH_TOKEN(p, 1, TOK_DOT, TOK_LPAREN, TOK_LBRACKET))
     {
         advance(p);
-        switch (current_token(p).kind)
+
+        // array initializer
+        if (CHECK_TOKEN_PATTERN(p, TOK_DOT, TOK_LBRACKET))
         {
-            // field access
-            case TOK_DOT:
+            AstNode* type_node = rvalue;
+            rvalue = MALLOC(sizeof(AstNode));
+            rvalue->kind = ANK_ARRAY_INIT;
+            rvalue->array_init.type_node = type_node;
+            rvalue->array_init.elems = anl_new();
+
+            advance(p); // .
+            advance(p); // [
+
+            // .[x]
+            //   ^--- we are here
+
+            // parse the intialized elements
+            while (!CHECK_TOKEN(p, TOK_RBRACKET))
             {
-                AstNode* owner = rvalue;
-                rvalue = MALLOC(sizeof(AstNode));
-                rvalue->kind = ANK_FIELD_ACCESS;
-                rvalue->field_access.owner = owner;
+                AstNode* elem = parse_rvalue(p);
+                anl_append(&rvalue->array_init.elems, *elem);
 
-                advance(p);
+                EXPECT_TOKEN(p, TOK_COMMA, TOK_RBRACKET);
 
-                rvalue->field_access.field = parse_lvalue(p);
-            } break;
-
-            // routine call
-            case TOK_LPAREN:
-            {
-                AstNode* routine = rvalue;
-                rvalue = MALLOC(sizeof(AstNode));
-                rvalue->kind = ANK_ROUTINE_CALL;
-                rvalue->routine_call.routine = routine;
-                rvalue->routine_call.args = anl_new();
-
-                advance(p);
-
-                // parse the args
-                while (!CHECK_TOKEN(p, TOK_RPAREN))
+                if (CHECK_TOKEN(p, TOK_COMMA))
                 {
-                    AstNode* arg = parse_rvalue(p);
-                    anl_append(&rvalue->routine_call.args, *arg);
-
-                    EXPECT_TOKEN(p, TOK_COMMA, TOK_RPAREN);
-
-                    if (CHECK_TOKEN(p, TOK_COMMA))
-                    {
-                        advance(p);
-                    }
+                    advance(p);
+                    EXPECT_TOKEN(p, RVALUE_STARTERS);
                 }
-
-                // print_ast_node(rvalue->routine_call.args.nodes[0]);
-            } break;
-
-            // array index
-            case TOK_LBRACKET:
+            }
+        }
+        else
+        {
+            switch (current_token(p).kind)
             {
-                AstNode* array = rvalue;
-                rvalue = MALLOC(sizeof(AstNode));
-                rvalue->kind = ANK_ARRAY_INDEX;
-                rvalue->array_index.array = array;
+                // field access
+                case TOK_DOT:
+                {
+                    AstNode* owner = rvalue;
+                    rvalue = MALLOC(sizeof(AstNode));
+                    rvalue->kind = ANK_FIELD_ACCESS;
+                    rvalue->field_access.owner = owner;
 
-                advance(p);
-                rvalue->array_index.index = parse_rvalue(p);
+                    advance(p);
 
-                // print_token(current_token(p));
+                    rvalue->field_access.field = parse_lvalue(p);
+                } break;
 
-                EXPECT_TOKEN(p, TOK_RBRACKET);
-            } break;
+                // routine call
+                case TOK_LPAREN:
+                {
+                    AstNode* routine = rvalue;
+                    rvalue = MALLOC(sizeof(AstNode));
+                    rvalue->kind = ANK_ROUTINE_CALL;
+                    rvalue->routine_call.routine = routine;
+                    rvalue->routine_call.args = anl_new();
 
-            default:
-            {
-                UNIMPLEMENTED();
+                    advance(p);
+
+                    // parse the args
+                    while (!CHECK_TOKEN(p, TOK_RPAREN))
+                    {
+                        AstNode* arg = parse_rvalue(p);
+                        anl_append(&rvalue->routine_call.args, *arg);
+
+                        EXPECT_TOKEN(p, TOK_COMMA, TOK_RPAREN);
+
+                        if (CHECK_TOKEN(p, TOK_COMMA))
+                        {
+                            advance(p);
+                            EXPECT_TOKEN(p, RVALUE_STARTERS);
+                        }
+                    }
+
+                    // print_ast_node(rvalue->routine_call.args.nodes[0]);
+                } break;
+
+                // array index
+                case TOK_LBRACKET:
+                {
+                    AstNode* array = rvalue;
+                    rvalue = MALLOC(sizeof(AstNode));
+                    rvalue->kind = ANK_ARRAY_INDEX;
+                    rvalue->array_index.array = array;
+
+                    advance(p);
+                    rvalue->array_index.index = parse_rvalue(p);
+
+                    // print_token(current_token(p));
+
+                    EXPECT_TOKEN(p, TOK_RBRACKET);
+                } break;
+
+                default:
+                {
+                    UNIMPLEMENTED();
+                }
             }
         }
     }
@@ -630,6 +688,57 @@ void print_ast_node(AstNode node)
             NEWLINE();
             printf("index: ");
             print_ast_node(*node.array_index.index);
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_ARRAY_TYPE:
+        {
+            printf("ARRAY TYPE {");
+            depth++;
+            NEWLINE();
+
+            if (node.array_type_node.size != NULL)
+            {
+                printf("size: ");
+                print_ast_node(*node.array_type_node.size);
+                NEWLINE();
+            }
+
+            printf("child type: ");
+            print_ast_node(*node.array_type_node.child_type_node);
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_ARRAY_INIT:
+        {
+            printf("ARRAY INIT {");
+            depth++;
+            NEWLINE();
+
+            if (node.array_init.type_node != NULL)
+            {
+                printf("type: ");
+                print_ast_node(*node.array_init.type_node);
+                NEWLINE();
+            }
+
+            printf("elems: [");
+            depth++;
+            for (size_t i = 0; i < node.array_init.elems.count; i++)
+            {
+                NEWLINE();
+                AstNode elem = node.array_init.elems.nodes[i];
+                print_ast_node(elem);
+            }
+            depth--;
+            if (node.array_init.elems.count > 0) NEWLINE();
+            printf("]");
 
             depth--;
             NEWLINE();

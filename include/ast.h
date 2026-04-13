@@ -22,6 +22,8 @@ typedef enum AstNodeKind
     ANK_BINARY,
     ANK_UNARY,
     ANK_ARRAY_INDEX,
+    ANK_ARRAY_TYPE,
+    ANK_ARRAY_INIT,
 
     // lvalue/rvalue
     ANK_IDENT,
@@ -122,6 +124,21 @@ typedef struct AstNode
             AstNode* array;
             AstNode* index;
         } array_index;
+
+        struct
+        {
+            // how big is the array?
+            AstNode* size; // nullable
+
+            // array of what?
+            AstNode* child_type_node;
+        } array_type_node;
+
+        struct
+        {
+            AstNode* type_node; // nullable
+            AstNodeList elems;
+        } array_init;
     };
 } AstNode;
 
