@@ -36,23 +36,23 @@ once the program ends.
 ### Parsing
 
 #### L/RValues
-| Type                | Status | Remarks                                         |
-|---------------------|:------:|-------------------------------------------------|
-| Literals            |   ✅   |                                                 |
-| Identifiers         |   ✅   |                                                 |
-| Binary expressions  |   ⏳   | Operator precedence is currently unimplemented  |
-| Unary expressions   |   ✅   |                                                 |
-| Routine calls       |   ✅   |                                                 |
-| Routine definitions |   ⬜   |                                                 |
-| Array initializer   |   ⏳   | Initializer with type ommitted is unimplemented |
-| Array types         |   ✅   |                                                 |
-| Array index         |   ✅   |                                                 |
-| Struct initializer  |   ⬜   |                                                 |
-| If-expressions      |   ⬜   |                                                 |
-| Match-expressions   |   ⬜   |                                                 |
-| Struct definitions  |   ⬜   |                                                 |
-| Enum definitions    |   ⬜   |                                                 |
-| Field access        |   ✅   |                                                 |
+| Type                | Status | Remarks                                        |
+|---------------------|:------:|------------------------------------------------|
+| Literals            |   ✅   |                                                |
+| Identifiers         |   ✅   |                                                |
+| Binary expressions  |   ⏳   | Operator precedence is currently unimplemented |
+| Unary expressions   |   ✅   |                                                |
+| Routine calls       |   ✅   |                                                |
+| Routine definitions |   ⬜   |                                                |
+| Array initializer   |   ✅   |                                                |
+| Array types         |   ✅   |                                                |
+| Array index         |   ✅   |                                                |
+| Struct initializer  |   ⬜   |                                                |
+| If-expressions      |   ⬜   |                                                |
+| Match-expressions   |   ⬜   |                                                |
+| Struct definitions  |   ⬜   |                                                |
+| Enum definitions    |   ⬜   |                                                |
+| Field access        |   ✅   |                                                |
 
 #### Statements
 | Type                  | Status | Remarks |

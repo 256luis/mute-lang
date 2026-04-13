@@ -16,7 +16,7 @@
 
 // List of TokenKinds that could be the beginning of an rvalue expression
 #define RVALUE_STARTERS\
-    TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE, TOK_LBRACKET
+    TOK_DOT, TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE, TOK_LBRACKET
 
 #define LVALUE_STARTERS\
     TOK_IDENT
@@ -238,6 +238,38 @@ static AstNode* parse_lvalue(Parser* p)
     return parse_term(p);
 }
 
+static AstNode* parse_array_init(Parser* p, AstNode* type_node)
+{
+    // AstNode* type_node = rvalue;
+    AstNode* node = MALLOC(sizeof(AstNode));
+    node->kind = ANK_ARRAY_INIT;
+    node->array_init.type_node = type_node;
+    node->array_init.elems = anl_new();
+
+    advance(p); // .
+    advance(p); // [
+
+    // .[x]
+    //   ^--- we are here
+
+    // parse the intialized elements
+    while (!CHECK_TOKEN(p, TOK_RBRACKET))
+    {
+        AstNode* elem = parse_rvalue(p);
+        anl_append(&node->array_init.elems, *elem);
+
+        EXPECT_TOKEN(p, TOK_COMMA, TOK_RBRACKET);
+
+        if (CHECK_TOKEN(p, TOK_COMMA))
+        {
+            advance(p);
+            EXPECT_TOKEN(p, RVALUE_STARTERS);
+        }
+    }
+
+    return node;
+}
+
 /*
   Parses a single term in an expression. Expressions enclosed in parentheses count
   as a single term.
@@ -252,120 +284,105 @@ static AstNode* parse_term(Parser* p)
     EXPECT_TOKEN(p, RVALUE_STARTERS);
 
     AstNode* rvalue = NULL;
-    switch (current_token(p).kind)
+
+    // array initializer with inferred type
+    if (CHECK_TOKEN_PATTERN(p, TOK_DOT, TOK_LBRACKET))
     {
-        case TOK_IDENT:
+        rvalue = parse_array_init(p, NULL);
+    }
+    else
+    {
+        switch (current_token(p).kind)
         {
-            rvalue = MALLOC(sizeof(AstNode));
-            rvalue->kind = ANK_IDENT;
-            rvalue->terminal = current_token(p);
-        } break;
-
-        case TOK_NUM:
-        {
-            rvalue = MALLOC(sizeof(AstNode));
-
-            // check if floating point
-            if(CHECK_TOKEN_PATTERN(p, TOK_NUM, TOK_DOT, TOK_NUM))
+            case TOK_IDENT:
             {
-                rvalue->kind = ANK_FLOAT;
-                rvalue->floating.whole = current_token(p);
-
-                advance(p);
-                advance(p);
-                rvalue->floating.fractional = current_token(p);
-            }
-            // must be int
-            else
-            {
-                rvalue->kind = ANK_INT;
+                rvalue = MALLOC(sizeof(AstNode));
+                rvalue->kind = ANK_IDENT;
                 rvalue->terminal = current_token(p);
-            }
-        } break;
+            } break;
 
-        case TOK_STRING:
-        {
-            rvalue = MALLOC(sizeof(AstNode));
-            rvalue->kind = ANK_STRING;
-            rvalue->terminal = current_token(p);
-        } break;
-
-        case TOK_LPAREN:
-        {
-            advance(p);
-            rvalue = parse_rvalue(p);
-            EXPECT_TOKEN(p, TOK_RPAREN);
-        } break;
-
-        case TOK_DASH:
-        case TOK_BANG:
-        case TOK_TILDE:
-        {
-            rvalue = parse_unary(p);
-        } break;
-
-        // array type
-        case TOK_LBRACKET:
-        {
-            rvalue = MALLOC(sizeof(AstNode));
-            rvalue->kind = ANK_ARRAY_TYPE;
-            rvalue->array_type_node.size = NULL;
-
-            advance(p);
-
-            // size of array is optional
-            if (!CHECK_TOKEN(p, TOK_RBRACKET))
+            case TOK_NUM:
             {
-                rvalue->array_type_node.size = parse_rvalue(p);
-                // advance(p);
+                rvalue = MALLOC(sizeof(AstNode));
+
+                // check if floating point
+                if(CHECK_TOKEN_PATTERN(p, TOK_NUM, TOK_DOT, TOK_NUM))
+                {
+                    rvalue->kind = ANK_FLOAT;
+                    rvalue->floating.whole = current_token(p);
+
+                    advance(p);
+                    advance(p);
+                    rvalue->floating.fractional = current_token(p);
+                }
+                // must be int
+                else
+                {
+                    rvalue->kind = ANK_INT;
+                    rvalue->terminal = current_token(p);
+                }
+            } break;
+
+            case TOK_STRING:
+            {
+                rvalue = MALLOC(sizeof(AstNode));
+                rvalue->kind = ANK_STRING;
+                rvalue->terminal = current_token(p);
+            } break;
+
+            case TOK_LPAREN:
+            {
+                advance(p);
+                rvalue = parse_rvalue(p);
+                EXPECT_TOKEN(p, TOK_RPAREN);
+            } break;
+
+            case TOK_DASH:
+            case TOK_BANG:
+            case TOK_TILDE:
+            {
+                rvalue = parse_unary(p);
+            } break;
+
+            // array type
+            case TOK_LBRACKET:
+            {
+                rvalue = MALLOC(sizeof(AstNode));
+                rvalue->kind = ANK_ARRAY_TYPE;
+                rvalue->array_type_node.size = NULL;
+
+                advance(p);
+
+                // size of array is optional
+                if (!CHECK_TOKEN(p, TOK_RBRACKET))
+                {
+                    rvalue->array_type_node.size = parse_rvalue(p);
+                    // advance(p);
+                }
+
+                EXPECT_TOKEN(p, TOK_RBRACKET);
+
+                advance(p);
+                rvalue->array_type_node.child_type_node = parse_rvalue(p);
+
+            } break;
+
+            default:
+            {
+                UNIMPLEMENTED();
             }
-
-            EXPECT_TOKEN(p, TOK_RBRACKET);
-
-            advance(p);
-            rvalue->array_type_node.child_type_node = parse_rvalue(p);
-
-        } break;
-
-        default:
-        {
-            UNIMPLEMENTED();
         }
+
     }
 
     if (CHECK_NTH_TOKEN(p, 1, TOK_DOT, TOK_LPAREN, TOK_LBRACKET))
     {
         advance(p);
 
-        // array initializer
+        // array initializer with explicit type
         if (CHECK_TOKEN_PATTERN(p, TOK_DOT, TOK_LBRACKET))
         {
-            AstNode* type_node = rvalue;
-            rvalue = MALLOC(sizeof(AstNode));
-            rvalue->kind = ANK_ARRAY_INIT;
-            rvalue->array_init.type_node = type_node;
-            rvalue->array_init.elems = anl_new();
-
-            advance(p); // .
-            advance(p); // [
-
-            // .[x]
-            //   ^--- we are here
-
-            // parse the intialized elements
-            while (!CHECK_TOKEN(p, TOK_RBRACKET))
-            {
-                AstNode* elem = parse_rvalue(p);
-                anl_append(&rvalue->array_init.elems, *elem);
-
-                EXPECT_TOKEN(p, TOK_COMMA, TOK_RBRACKET);
-
-                if (CHECK_TOKEN(p, TOK_COMMA))
-                {
-                    advance(p);
-                    EXPECT_TOKEN(p, RVALUE_STARTERS);
-                }
-            }
+            rvalue = parse_array_init(p, rvalue);
         }
         else
         {
