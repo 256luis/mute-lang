@@ -85,7 +85,7 @@ char* read_file_to_string(char* path)
 
     // allocate and write bytes
     // +1 for null terminator
-    char* bytes = CALLOC(size, sizeof(char));
+    char* bytes = CALLOC(size + 1, sizeof(char));
 
     for (int i = 0, c = fgetc(file); c != EOF; i++, c = fgetc(file))
     {
