@@ -24,6 +24,7 @@ typedef enum AstNodeKind
     ANK_ARRAY_INDEX,
     ANK_ARRAY_TYPE,
     ANK_ARRAY_INIT,
+    ANK_STRUCT_INIT,
 
     // lvalue/rvalue
     ANK_IDENT,
@@ -139,6 +140,13 @@ typedef struct AstNode
             AstNode* type_node; // nullable
             AstNodeList elems;
         } array_init;
+
+        struct
+        {
+            AstNode* type_node; // nullable
+            TokenList member_idents;
+            AstNodeList member_inits;
+        } struct_init;
     };
 } AstNode;
 

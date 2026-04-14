@@ -47,7 +47,7 @@ once the program ends.
 | Array initializer   |   ✅   |                                                |
 | Array types         |   ✅   |                                                |
 | Array index         |   ✅   |                                                |
-| Struct initializer  |   ⬜   |                                                |
+| Struct initializer  |   ✅   |                                                |
 | If-expressions      |   ⬜   |                                                |
 | Match-expressions   |   ⬜   |                                                |
 | Struct definitions  |   ⬜   |                                                |

@@ -240,17 +240,18 @@ static AstNode* parse_lvalue(Parser* p)
 
 static AstNode* parse_array_init(Parser* p, AstNode* type_node)
 {
-    // AstNode* type_node = rvalue;
     AstNode* node = MALLOC(sizeof(AstNode));
     node->kind = ANK_ARRAY_INIT;
     node->array_init.type_node = type_node;
     node->array_init.elems = anl_new();
 
+    // not checking these two tokens because we already know that this is an array
+    // initializer
     advance(p); // .
     advance(p); // [
 
-    // .[x]
-    //   ^--- we are here
+    // [n]T.[x]
+    //       ^--- we are here
 
     // parse the intialized elements
     while (!CHECK_TOKEN(p, TOK_RBRACKET))
@@ -259,11 +260,49 @@ static AstNode* parse_array_init(Parser* p, AstNode* type_node)
         anl_append(&node->array_init.elems, *elem);
 
         EXPECT_TOKEN(p, TOK_COMMA, TOK_RBRACKET);
-
         if (CHECK_TOKEN(p, TOK_COMMA))
         {
             advance(p);
-            EXPECT_TOKEN(p, RVALUE_STARTERS);
+            // EXPECT_TOKEN(p, RVALUE_STARTERS);
+        }
+    }
+
+    return node;
+}
+
+static AstNode* parse_struct_init(Parser* p, AstNode* type_node)
+{
+    AstNode* node = MALLOC(sizeof(AstNode));
+    node->kind = ANK_STRUCT_INIT;
+    node->struct_init.type_node = type_node;
+    node->struct_init.member_idents = tl_new();
+    node->struct_init.member_inits = anl_new();
+
+    // not checking these two tokens because we already know that this is a struct
+    // initializer
+    advance(p); // .
+    advance(p); // {
+
+    // T.{ x = y }
+    //     ^--- we are here
+
+    while (!CHECK_TOKEN(p, TOK_RBRACE))
+    {
+        EXPECT_TOKEN(p, TOK_IDENT);
+        tl_append(&node->struct_init.member_idents, current_token(p));
+
+        advance(p);
+        EXPECT_TOKEN(p, TOK_EQUAL);
+
+        advance(p);
+        AstNode* member_init = parse_rvalue(p);
+        anl_append(&node->struct_init.member_inits, *member_init);
+
+        EXPECT_TOKEN(p, TOK_COMMA, TOK_RBRACE);
+        if (CHECK_TOKEN(p, TOK_COMMA))
+        {
+            advance(p);
+            // EXPECT_TOKEN(p, TOK_IDENT);
         }
     }
 
@@ -289,6 +328,10 @@ static AstNode* parse_term(Parser* p)
     if (CHECK_TOKEN_PATTERN(p, TOK_DOT, TOK_LBRACKET))
     {
         rvalue = parse_array_init(p, NULL);
+    }
+    else if (CHECK_TOKEN_PATTERN(p, TOK_DOT, TOK_LBRACE))
+    {
+        rvalue = parse_struct_init(p, NULL);
     }
     else
     {
@@ -383,6 +426,10 @@ static AstNode* parse_term(Parser* p)
         if (CHECK_TOKEN_PATTERN(p, TOK_DOT, TOK_LBRACKET))
         {
             rvalue = parse_array_init(p, rvalue);
+        }
+        else if (CHECK_TOKEN_PATTERN(p, TOK_DOT, TOK_LBRACE))
+        {
+            rvalue = parse_struct_init(p, rvalue);
         }
         else
         {
@@ -762,10 +809,35 @@ void print_ast_node(AstNode node)
             printf("}");
         } break;
 
-        default:
+        case ANK_STRUCT_INIT:
         {
-            UNIMPLEMENTED();
-        }
+            printf("STRUCT INIT {");
+            depth++;
+            NEWLINE();
+
+            if (node.struct_init.type_node != NULL)
+            {
+                printf("type: ");
+                print_ast_node(*node.struct_init.type_node);
+                NEWLINE();
+            }
+
+            printf("members: [");
+            depth++;
+            for (size_t i = 0; i < node.struct_init.member_inits.count; i++)
+            {
+                NEWLINE();
+                printf("%s = ", node.struct_init.member_idents.tokens[i].string);
+                print_ast_node(node.struct_init.member_inits.nodes[i]);
+            }
+            depth--;
+            if (node.struct_init.member_inits.count > 0) NEWLINE();
+            printf("}");
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
     }
 #undef NEWLINE
 }

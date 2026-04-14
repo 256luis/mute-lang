@@ -21,7 +21,8 @@ else()
     -Wextra
     -Wpedantic
     -Wno-strict-prototypes
-    -Wno-deprecated-declarations)
+    -Wno-deprecated-declarations
+    -Werror=switch)
 endif()
 
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
