@@ -10,7 +10,8 @@ typedef struct AstNode AstNode;
 typedef enum AstNodeKind
 {
     // base node kinds
-    ANK_ROUTINE_DECLARATION,
+    ANK_VARIABLE_DECL,
+    ANK_ROUTINE_DECL,
 
     // base/rvalue
     ANK_ROUTINE_CALL,
@@ -147,6 +148,15 @@ typedef struct AstNode
             TokenList member_idents;
             AstNodeList member_inits;
         } struct_init;
+
+
+        struct
+        {
+            Token ident;
+            bool is_mutable;
+            AstNode* type_node; // nullable
+            AstNode* rvalue;
+        } variable_decl;
     };
 } AstNode;
 

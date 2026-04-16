@@ -62,6 +62,7 @@ static char* reserved_symbols[] = {
     [TOK_WHILE]       = "while",
     [TOK_MATCH]       = "match",
     [TOK_FOR]         = "for",
+    [TOK_MUT]         = "mut",
 
     [TOK_DOT]         = ".",
     [TOK_AND]         = "&",
@@ -138,7 +139,7 @@ static Token make_token(char* symbol, int line, int column)
     }
     else
     {
-        ERROR("invalid symbol `%s`\n", token.string);
+        ERROR("invalid symbol `%s` @ %d\n", token.string, line);
     }
 
     return token;
@@ -158,8 +159,12 @@ TokenList tokenize(char* source_code)
     int line = 1;
     int column = 1;
     bool in_comment = false;
+    bool do_make_token = false;
+    bool do_make_token_string = false;
     for (int i = 0; i < source_code_length; i++)
     {
+        do_make_token = false;
+        do_make_token_string = false;
         char c = source_code[i];
 
         column++;
@@ -184,8 +189,6 @@ TokenList tokenize(char* source_code)
             continue;
         }
 
-        bool do_make_token = false;
-        bool do_make_token_string = false;
         switch (state)
         {
             case STATE_START:
@@ -300,9 +303,12 @@ TokenList tokenize(char* source_code)
         }
     }
 
-    symbol_buffer[symbol_buffer_length] = 0;
-    Token last_token = make_token(symbol_buffer, line, column);
-    tl_append(&token_list, last_token);
+    if (!do_make_token && !do_make_token_string)
+    {
+        symbol_buffer[symbol_buffer_length] = 0;
+        Token last_token = make_token(symbol_buffer, line, column);
+        tl_append(&token_list, last_token);
+    }
 
     Token eof = {
         .kind = TOK_EOF,

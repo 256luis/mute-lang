@@ -49,6 +49,7 @@
                 sizeof((TokenKind[]){ __VA_ARGS__ })/sizeof(TokenKind));\
         if (!result)\
         {\
+            DEBUG(printf("called from line %d\n", __LINE__));\
             ERROR("unexpected symbol `%s` @ line %d\n", t.string, t.line);\
         }\
     } while(0)
@@ -259,6 +260,7 @@ static AstNode* parse_array_init(Parser* p, AstNode* type_node)
         AstNode* elem = parse_rvalue(p);
         anl_append(&node->array_init.elems, *elem);
 
+        advance(p);
         EXPECT_TOKEN(p, TOK_COMMA, TOK_RBRACKET);
         if (CHECK_TOKEN(p, TOK_COMMA))
         {
@@ -298,6 +300,7 @@ static AstNode* parse_struct_init(Parser* p, AstNode* type_node)
         AstNode* member_init = parse_rvalue(p);
         anl_append(&node->struct_init.member_inits, *member_init);
 
+        advance(p);
         EXPECT_TOKEN(p, TOK_COMMA, TOK_RBRACE);
         if (CHECK_TOKEN(p, TOK_COMMA))
         {
@@ -377,6 +380,8 @@ static AstNode* parse_term(Parser* p)
             {
                 advance(p);
                 rvalue = parse_rvalue(p);
+
+                advance(p);
                 EXPECT_TOKEN(p, TOK_RPAREN);
             } break;
 
@@ -400,14 +405,13 @@ static AstNode* parse_term(Parser* p)
                 if (!CHECK_TOKEN(p, TOK_RBRACKET))
                 {
                     rvalue->array_type_node.size = parse_rvalue(p);
-                    // advance(p);
+                    advance(p);
                 }
 
                 EXPECT_TOKEN(p, TOK_RBRACKET);
 
                 advance(p);
-                rvalue->array_type_node.child_type_node = parse_rvalue(p);
-
+                rvalue->array_type_node.child_type_node = parse_term(p);
             } break;
 
             default:
@@ -425,7 +429,12 @@ static AstNode* parse_term(Parser* p)
         // array initializer with explicit type
         if (CHECK_TOKEN_PATTERN(p, TOK_DOT, TOK_LBRACKET))
         {
+            printf("===========\n");
+            print_ast_node(*rvalue);
+            printf("\n===========\n");
+
             rvalue = parse_array_init(p, rvalue);
+
         }
         else if (CHECK_TOKEN_PATTERN(p, TOK_DOT, TOK_LBRACE))
         {
@@ -465,6 +474,7 @@ static AstNode* parse_term(Parser* p)
                         AstNode* arg = parse_rvalue(p);
                         anl_append(&rvalue->routine_call.args, *arg);
 
+                        advance(p);
                         EXPECT_TOKEN(p, TOK_COMMA, TOK_RPAREN);
 
                         if (CHECK_TOKEN(p, TOK_COMMA))
@@ -488,8 +498,7 @@ static AstNode* parse_term(Parser* p)
                     advance(p);
                     rvalue->array_index.index = parse_rvalue(p);
 
-                    // print_token(current_token(p));
-
+                    advance(p);
                     EXPECT_TOKEN(p, TOK_RBRACKET);
                 } break;
 
@@ -559,9 +568,11 @@ static AstNode* parse_rvalue(Parser* p)
 
     // TODO: operator precedence
 
-    advance(p);
-    while (CHECK_TOKEN(p, BINARY_OPERATOR_TOKENS))
+    // advance(p);
+    while (CHECK_NTH_TOKEN(p, 1, BINARY_OPERATOR_TOKENS))
     {
+        advance(p);
+
         AstNode* left = rvalue;
 
         rvalue = MALLOC(sizeof(AstNode));
@@ -575,7 +586,7 @@ static AstNode* parse_rvalue(Parser* p)
         rvalue->binary.right = right;
         rvalue->binary.left = left;
 
-        advance(p);
+        // advance(p);
     }
 
     ASSERT(rvalue != NULL);
@@ -597,6 +608,45 @@ static AstNode* parse_statement(Parser* p)
 
     switch (current_token(p).kind)
     {
+        // variable declaration
+        case TOK_LET:
+        {
+            node = MALLOC(sizeof(AstNode));
+            node->kind = ANK_VARIABLE_DECL;
+            node->variable_decl.is_mutable = false;
+            node->variable_decl.type_node = NULL;
+
+            advance(p);
+            EXPECT_TOKEN(p, TOK_MUT, TOK_IDENT);
+
+            if (CHECK_TOKEN(p, TOK_MUT))
+            {
+                node->variable_decl.is_mutable = true;
+                advance(p);
+                EXPECT_TOKEN(p, TOK_IDENT);
+            }
+
+            node->variable_decl.ident = current_token(p);
+
+            advance(p);
+            EXPECT_TOKEN(p, TOK_EQUAL, TOK_COLON);
+
+            if (CHECK_TOKEN(p, TOK_COLON))
+            {
+                advance(p);
+                node->variable_decl.type_node = parse_term(p);
+
+                advance(p);
+                EXPECT_TOKEN(p, TOK_EQUAL);
+            }
+
+            advance(p);
+            node->variable_decl.rvalue = parse_rvalue(p);
+
+            advance(p);
+            EXPECT_TOKEN(p, TOK_SEMICOLON);
+        } break;
+
         default:
         {
             UNIMPLEMENTED();
@@ -615,7 +665,7 @@ AstNode* parse(TokenList tl)
         .index = 0,
     };
 
-    return parse_rvalue(&p);
+    return parse_statement(&p);
 }
 
 void print_ast_node(AstNode node)
@@ -633,7 +683,7 @@ void print_ast_node(AstNode node)
 
     switch (node.kind)
     {
-        case ANK_ROUTINE_DECLARATION:
+        case ANK_ROUTINE_DECL:
         {
             UNIMPLEMENTED();
         } break;
@@ -833,6 +883,33 @@ void print_ast_node(AstNode node)
             depth--;
             if (node.struct_init.member_inits.count > 0) NEWLINE();
             printf("}");
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_VARIABLE_DECL:
+        {
+            printf("VARIABLE DECL {");
+            depth++;
+            NEWLINE();
+
+            printf("mutable: %s", node.variable_decl.is_mutable ? "true" : "false");
+
+            NEWLINE();
+            printf("ident: %s", node.variable_decl.ident.string);
+
+            if (node.variable_decl.type_node != NULL)
+            {
+                NEWLINE();
+                printf("type: ");
+                print_ast_node(*node.variable_decl.type_node);
+            }
+
+            NEWLINE();
+            printf("value: ");
+            print_ast_node(*node.variable_decl.rvalue);
 
             depth--;
             NEWLINE();

@@ -19,12 +19,15 @@
     do { fprintf(stderr, "REACHED UNREACHABLE @ %s:%d\n", __FILE__, __LINE__); abort(); } while (0)
 #define ASSERT(cond)\
     assert(cond)
+#define DEBUG(...)\
+    __VA_ARGS__
 
 #elif defined(NDEBUG)
 
 #define UNIMPLEMENTED()
 #define UNREACHABLE()
 #define ASSERT(cond)
+#define DEBUG(...)
 
 #else
 
