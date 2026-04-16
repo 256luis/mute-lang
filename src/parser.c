@@ -21,6 +21,9 @@
 #define LVALUE_STARTERS\
     TOK_IDENT
 
+#define TYPE_STARTERS\
+    TOK_IDENT, TOK_LBRACKET
+
 /*
   Macro for more convenient implementation of language grammar. Reports error and
   exits if expectation is not met.
@@ -312,6 +315,53 @@ static AstNode* parse_struct_init(Parser* p, AstNode* type_node)
     return node;
 }
 
+static AstNode* parse_type(Parser* p)
+{
+    EXPECT_TOKEN(p, TYPE_STARTERS);
+
+    AstNode* type_node = NULL;
+
+    switch (current_token(p).kind)
+    {
+        case TOK_IDENT:
+        {
+            // identical to what's in parse_term
+            type_node = MALLOC(sizeof(AstNode));
+            type_node->kind = ANK_IDENT;
+            type_node->terminal = current_token(p);
+        } break;
+
+        // array type
+        case TOK_LBRACKET:
+        {
+            type_node = MALLOC(sizeof(AstNode));
+            type_node->kind = ANK_ARRAY_TYPE;
+            type_node->array_type_node.size = NULL;
+
+            advance(p);
+
+            // size of array is optional
+            if (!CHECK_TOKEN(p, TOK_RBRACKET))
+            {
+                type_node->array_type_node.size = parse_rvalue(p);
+                advance(p);
+            }
+
+            EXPECT_TOKEN(p, TOK_RBRACKET);
+
+            advance(p);
+            type_node->array_type_node.child_type_node = parse_type(p);
+        } break;
+
+        default:
+        {
+            UNREACHABLE();
+        }
+    }
+
+    return type_node;
+}
+
 /*
   Parses a single term in an expression. Expressions enclosed in parentheses count
   as a single term.
@@ -332,6 +382,7 @@ static AstNode* parse_term(Parser* p)
     {
         rvalue = parse_array_init(p, NULL);
     }
+    // struct initializer with inferred type
     else if (CHECK_TOKEN_PATTERN(p, TOK_DOT, TOK_LBRACE))
     {
         rvalue = parse_struct_init(p, NULL);
@@ -395,23 +446,7 @@ static AstNode* parse_term(Parser* p)
             // array type
             case TOK_LBRACKET:
             {
-                rvalue = MALLOC(sizeof(AstNode));
-                rvalue->kind = ANK_ARRAY_TYPE;
-                rvalue->array_type_node.size = NULL;
-
-                advance(p);
-
-                // size of array is optional
-                if (!CHECK_TOKEN(p, TOK_RBRACKET))
-                {
-                    rvalue->array_type_node.size = parse_rvalue(p);
-                    advance(p);
-                }
-
-                EXPECT_TOKEN(p, TOK_RBRACKET);
-
-                advance(p);
-                rvalue->array_type_node.child_type_node = parse_term(p);
+                rvalue = parse_type(p);
             } break;
 
             default:
@@ -429,12 +464,7 @@ static AstNode* parse_term(Parser* p)
         // array initializer with explicit type
         if (CHECK_TOKEN_PATTERN(p, TOK_DOT, TOK_LBRACKET))
         {
-            printf("===========\n");
-            print_ast_node(*rvalue);
-            printf("\n===========\n");
-
             rvalue = parse_array_init(p, rvalue);
-
         }
         else if (CHECK_TOKEN_PATTERN(p, TOK_DOT, TOK_LBRACE))
         {
