@@ -199,6 +199,7 @@ static void anl_append(AstNodeList* anl, AstNode node)
 // forward declaration
 static AstNode* parse_rvalue(Parser* parser);
 static AstNode* parse_term(Parser* parser);
+static AstNode* parse_statement(Parser* p);
 
 /*
   Converts a TokenKind into its corresponding UnaryOperator
@@ -360,6 +361,26 @@ static AstNode* parse_type(Parser* p)
     }
 
     return type_node;
+}
+
+static AstNode* parse_if(Parser* p)
+{
+    AstNode* node = MALLOC(sizeof(AstNode));
+    node->kind = ANK_IF;
+    node->if_stmt.on_false = NULL;
+
+    advance(p);
+    node->if_stmt.cond = parse_rvalue(p);
+
+    advance(p);
+    node->if_stmt.on_true = parse_statement(p);
+
+    if (CHECK_NTH_TOKEN(p, 1, TOK_ELSE))
+    {
+        node->if_stmt.on_false = parse_statement(p);
+    }
+
+    return node;
 }
 
 /*
@@ -634,6 +655,9 @@ static AstNode* parse_rvalue(Parser* p)
 */
 static AstNode* parse_statement(Parser* p)
 {
+    // TODO:
+    // EXPECT_TOKEN(p, STATEMENT_STARTERS);
+
     AstNode* node = NULL;
 
     switch (current_token(p).kind)
@@ -675,10 +699,17 @@ static AstNode* parse_statement(Parser* p)
 
             advance(p);
             EXPECT_TOKEN(p, TOK_SEMICOLON);
+            advance(p);
+        } break;
+
+        case TOK_IF:
+        {
+            node = parse_if(p);
         } break;
 
         default:
         {
+            print_token(current_token(p));
             UNIMPLEMENTED();
         }
     }
@@ -940,6 +971,30 @@ void print_ast_node(AstNode node)
             NEWLINE();
             printf("value: ");
             print_ast_node(*node.variable_decl.rvalue);
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_IF:
+        {
+            printf("IF {");
+            depth++;
+            NEWLINE();
+
+            printf("cond: ");
+            print_ast_node(*node.if_stmt.cond);
+
+            NEWLINE();
+            printf("on true: ");
+            print_ast_node(*node.if_stmt.on_true);
+
+            if (node.if_stmt.on_false != NULL)
+            {
+                printf("else: ");
+                print_ast_node(*node.if_stmt.on_false);
+            }
 
             depth--;
             NEWLINE();

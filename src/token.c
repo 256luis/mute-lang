@@ -47,7 +47,7 @@ void tl_append(TokenList* tl, Token token)
     tl->count++;
 }
 
-#define TOK_SPECIAL_SYMBOLS_START TOK_DOT
+#define TOK_SPECIAL_SYMBOLS_START TOK_AND
 static char* reserved_symbols[] = {
     [TOK_ROUTINE]     = "routine",
     [TOK_FUNC]        = "func",
@@ -59,12 +59,12 @@ static char* reserved_symbols[] = {
     [TOK_ENUM]        = "enum",
     [TOK_TYPE]        = "type",
     [TOK_IF]          = "if",
+    [TOK_ELSE]        = "else",
     [TOK_WHILE]       = "while",
     [TOK_MATCH]       = "match",
     [TOK_FOR]         = "for",
     [TOK_MUT]         = "mut",
 
-    [TOK_DOT]         = ".",
     [TOK_AND]         = "&",
     [TOK_LINE]        = "|",
     [TOK_PLUS]        = "+",
@@ -88,6 +88,7 @@ static char* reserved_symbols[] = {
     [TOK_BANG]        = "!",
     [TOK_TILDE]       = "~",
 
+    [TOK_DOT]         = ".",
     [TOK_ARROW]       = "->",
     [TOK_COMMA]       = ",",
     [TOK_COLON]       = ":",
@@ -250,6 +251,8 @@ TokenList tokenize(char* source_code)
                     symbol_buffer[symbol_buffer_length] = c;
                     symbol_buffer_length++;
                     symbol_buffer[symbol_buffer_length] = 0;
+
+                    // printf("%s\n", symbol_buffer);
 
                     // check if one of reserved symbols
                     bool is_reserved_symbol = false;

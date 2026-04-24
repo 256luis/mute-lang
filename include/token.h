@@ -23,6 +23,7 @@ typedef enum TokenKind
     TOK_ENUM,
     TOK_TYPE,
     TOK_IF,
+    TOK_ELSE,
     TOK_WHILE,
     TOK_MATCH,
     TOK_FOR,

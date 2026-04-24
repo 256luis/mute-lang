@@ -15,6 +15,7 @@ typedef enum AstNodeKind
 
     // base/rvalue
     ANK_ROUTINE_CALL,
+    ANK_IF,
 
     // just rvalue
     ANK_STRING,
@@ -157,6 +158,13 @@ typedef struct AstNode
             AstNode* type_node; // nullable
             AstNode* rvalue;
         } variable_decl;
+
+        struct
+        {
+            AstNode* cond;
+            AstNode* on_true;
+            AstNode* on_false; // nullable
+        } if_stmt;
     };
 } AstNode;
 
