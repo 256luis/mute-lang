@@ -58,9 +58,9 @@ once the program ends.
 #### Statements
 | Type                  | Status | Remarks |
 |-----------------------|:------:|---------|
-| Variable declarations |   ⬜   |         |
+| Variable declarations |   ✅   |         |
 | Variable reassignment |   ✅   |         |
-| Constant declarations |   ⬜   |         |
+| Constant declarations |   ✅   |         |
 | Routine declarations  |   ⬜   |         |
 | Type aliases          |   ⬜   |         |
 | If-statements         |   ✅   |         |

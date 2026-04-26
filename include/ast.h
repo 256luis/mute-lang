@@ -14,6 +14,7 @@ typedef enum AstNodeKind
     ANK_ROUTINE_DECL,
     ANK_COMPOUND,
     ANK_VARIABLE_ASSIGN,
+    ANK_CONST_DECL,
 
     // base/rvalue
     ANK_ROUTINE_CALL,
@@ -159,7 +160,7 @@ typedef struct AstNode
             bool is_mutable;
             AstNode* type_node; // nullable
             AstNode* rvalue;
-        } variable_decl;
+        } varconst_decl;
 
         struct
         {

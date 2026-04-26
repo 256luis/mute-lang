@@ -25,7 +25,7 @@
     TOK_IDENT, TOK_LBRACKET
 
 #define STATEMENT_STARTERS\
-    TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
+    TOK_CONST, TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
 
 /*
   Macro for more convenient implementation of language grammar. Reports error and
@@ -710,25 +710,31 @@ static AstNode* parse_stmt(Parser* p)
             EXPECT_TOKEN(p, TOK_SEMICOLON);
         } break;
 
-        // variable declaration
+        // variable & const  declaration
+        case TOK_CONST:
         case TOK_LET:
         {
             node = MALLOC(sizeof(AstNode));
-            node->kind = ANK_VARIABLE_DECL;
-            node->variable_decl.is_mutable = false;
-            node->variable_decl.type_node = NULL;
+
+            if (CHECK_TOKEN(p, TOK_LET))
+                node->kind = ANK_VARIABLE_DECL;
+            else
+                node->kind = ANK_CONST_DECL;
+
+            node->varconst_decl.is_mutable = false;
+            node->varconst_decl.type_node = NULL;
 
             advance(p);
             EXPECT_TOKEN(p, TOK_MUT, TOK_IDENT);
 
             if (CHECK_TOKEN(p, TOK_MUT))
             {
-                node->variable_decl.is_mutable = true;
+                node->varconst_decl.is_mutable = true;
                 advance(p);
                 EXPECT_TOKEN(p, TOK_IDENT);
             }
 
-            node->variable_decl.ident = current_token(p);
+            node->varconst_decl.ident = current_token(p);
 
             advance(p);
             EXPECT_TOKEN(p, TOK_EQUAL, TOK_COLON);
@@ -736,14 +742,14 @@ static AstNode* parse_stmt(Parser* p)
             if (CHECK_TOKEN(p, TOK_COLON))
             {
                 advance(p);
-                node->variable_decl.type_node = parse_term(p);
+                node->varconst_decl.type_node = parse_term(p);
 
                 advance(p);
                 EXPECT_TOKEN(p, TOK_EQUAL);
             }
 
             advance(p);
-            node->variable_decl.rvalue = parse_rvalue(p);
+            node->varconst_decl.rvalue = parse_rvalue(p);
 
             advance(p);
             EXPECT_TOKEN(p, TOK_SEMICOLON);
@@ -1002,27 +1008,32 @@ void print_ast_node(AstNode node)
             printf("}");
         } break;
 
+        case ANK_CONST_DECL:
         case ANK_VARIABLE_DECL:
         {
-            printf("VARIABLE DECL {");
+            if (node.kind == ANK_VARIABLE_DECL)
+                printf("VARIABLE DECL {");
+            else
+                printf("CONST DECL {");
+
             depth++;
             NEWLINE();
 
-            printf("mutable: %s", node.variable_decl.is_mutable ? "true" : "false");
+            printf("mutable: %s", node.varconst_decl.is_mutable ? "true" : "false");
 
             NEWLINE();
-            printf("ident: %s", node.variable_decl.ident.string);
+            printf("ident: %s", node.varconst_decl.ident.string);
 
-            if (node.variable_decl.type_node != NULL)
+            if (node.varconst_decl.type_node != NULL)
             {
                 NEWLINE();
                 printf("type: ");
-                print_ast_node(*node.variable_decl.type_node);
+                print_ast_node(*node.varconst_decl.type_node);
             }
 
             NEWLINE();
             printf("value: ");
-            print_ast_node(*node.variable_decl.rvalue);
+            print_ast_node(*node.varconst_decl.rvalue);
 
             depth--;
             NEWLINE();
