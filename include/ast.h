@@ -12,6 +12,7 @@ typedef enum AstNodeKind
     // base node kinds
     ANK_VARIABLE_DECL,
     ANK_ROUTINE_DECL,
+    ANK_COMPOUND,
 
     // base/rvalue
     ANK_ROUTINE_CALL,
@@ -165,6 +166,11 @@ typedef struct AstNode
             AstNode* on_true;
             AstNode* on_false; // nullable
         } if_stmt;
+
+        struct
+        {
+            AstNodeList stmts;
+        } compound;
     };
 } AstNode;
 

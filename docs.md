@@ -53,6 +53,7 @@ once the program ends.
 | Struct definitions  |   ⬜   |                                                |
 | Enum definitions    |   ⬜   |                                                |
 | Field access        |   ✅   |                                                |
+| Compound            |   ✅   |                                                |
 
 #### Statements
 | Type                  | Status | Remarks |
@@ -62,7 +63,8 @@ once the program ends.
 | Constant declarations |   ⬜   |         |
 | Routine declarations  |   ⬜   |         |
 | Type aliases          |   ⬜   |         |
-| If-statements         |   ⬜   |         |
+| If-statements         |   ✅   |         |
 | Match-statements      |   ⬜   |         |
 | While-loops           |   ⬜   |         |
 | For-loops             |   ⬜   |         |
+| Compound              |   ✅   |         |

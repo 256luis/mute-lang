@@ -16,13 +16,16 @@
 
 // List of TokenKinds that could be the beginning of an rvalue expression
 #define RVALUE_STARTERS\
-    TOK_IF, TOK_DOT, TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE, TOK_LBRACKET
+    TOK_LBRACE, TOK_IF, TOK_DOT, TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE, TOK_LBRACKET
 
 #define LVALUE_STARTERS\
     TOK_IDENT
 
 #define TYPE_STARTERS\
     TOK_IDENT, TOK_LBRACKET
+
+#define STATEMENT_STARTERS\
+    TOK_LET, TOK_IF, TOK_LBRACE
 
 /*
   Macro for more convenient implementation of language grammar. Reports error and
@@ -199,7 +202,7 @@ static void anl_append(AstNodeList* anl, AstNode node)
 // forward declaration
 static AstNode* parse_rvalue(Parser* parser);
 static AstNode* parse_term(Parser* parser);
-static AstNode* parse_statement(Parser* p);
+static AstNode* parse_stmt(Parser* p);
 
 /*
   Converts a TokenKind into its corresponding UnaryOperator
@@ -373,13 +376,30 @@ static AstNode* parse_if(Parser* p)
     node->if_stmt.cond = parse_rvalue(p);
 
     advance(p);
-    node->if_stmt.on_true = parse_statement(p);
+    node->if_stmt.on_true = parse_stmt(p);
 
     if (CHECK_NTH_TOKEN(p, 1, TOK_ELSE))
     {
         advance(p);
         advance(p);
-        node->if_stmt.on_false = parse_statement(p);
+        node->if_stmt.on_false = parse_stmt(p);
+    }
+
+    return node;
+}
+
+static AstNode* parse_compound(Parser* p)
+{
+    AstNode* node = MALLOC(sizeof(AstNode));
+    node->kind = ANK_COMPOUND;
+    node->compound.stmts = anl_new();
+
+    advance(p);
+    while (!CHECK_TOKEN(p, TOK_RBRACE))
+    {
+        AstNode* stmt = parse_stmt(p);
+        anl_append(&node->compound.stmts, *stmt);
+        advance(p);
     }
 
     return node;
@@ -475,6 +495,11 @@ static AstNode* parse_term(Parser* p)
             case TOK_IF:
             {
                 rvalue = parse_if(p);
+            } break;
+
+            case TOK_LBRACE:
+            {
+                rvalue = parse_compound(p);
             } break;
 
             default:
@@ -660,10 +685,9 @@ static AstNode* parse_rvalue(Parser* p)
 
   Returns an AstNode that is your statement.
 */
-static AstNode* parse_statement(Parser* p)
+static AstNode* parse_stmt(Parser* p)
 {
-    // TODO:
-    // EXPECT_TOKEN(p, STATEMENT_STARTERS);
+    EXPECT_TOKEN(p, STATEMENT_STARTERS);
 
     AstNode* node = NULL;
 
@@ -713,6 +737,11 @@ static AstNode* parse_statement(Parser* p)
             node = parse_if(p);
         } break;
 
+        case TOK_LBRACE:
+        {
+            node = parse_compound(p);
+        } break;
+
         default:
         {
             print_token(current_token(p));
@@ -732,7 +761,7 @@ AstNode* parse(TokenList tl)
         .index = 0,
     };
 
-    return parse_statement(&p);
+    return parse_stmt(&p);
 }
 
 void print_ast_node(AstNode node)
@@ -1000,6 +1029,23 @@ void print_ast_node(AstNode node)
             {
                 printf("else: ");
                 print_ast_node(*node.if_stmt.on_false);
+            }
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_COMPOUND:
+        {
+            printf("COMPOUND: {");
+            depth++;
+
+            for (size_t i = 0; i < node.compound.stmts.count; i++)
+            {
+                NEWLINE();
+                AstNode stmt = node.compound.stmts.nodes[i];
+                print_ast_node(stmt);
             }
 
             depth--;
