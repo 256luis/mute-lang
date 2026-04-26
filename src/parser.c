@@ -16,7 +16,7 @@
 
 // List of TokenKinds that could be the beginning of an rvalue expression
 #define RVALUE_STARTERS\
-    TOK_DOT, TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE, TOK_LBRACKET
+    TOK_IF, TOK_DOT, TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE, TOK_LBRACKET
 
 #define LVALUE_STARTERS\
     TOK_IDENT
@@ -377,6 +377,8 @@ static AstNode* parse_if(Parser* p)
 
     if (CHECK_NTH_TOKEN(p, 1, TOK_ELSE))
     {
+        advance(p);
+        advance(p);
         node->if_stmt.on_false = parse_statement(p);
     }
 
@@ -468,6 +470,11 @@ static AstNode* parse_term(Parser* p)
             case TOK_LBRACKET:
             {
                 rvalue = parse_type(p);
+            } break;
+
+            case TOK_IF:
+            {
+                rvalue = parse_if(p);
             } break;
 
             default:
@@ -699,7 +706,6 @@ static AstNode* parse_statement(Parser* p)
 
             advance(p);
             EXPECT_TOKEN(p, TOK_SEMICOLON);
-            advance(p);
         } break;
 
         case TOK_IF:

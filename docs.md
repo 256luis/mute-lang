@@ -48,7 +48,7 @@ once the program ends.
 | Array types         |   ✅   |                                                |
 | Array index         |   ✅   |                                                |
 | Struct initializer  |   ✅   |                                                |
-| If-expressions      |   ⬜   |                                                |
+| If-expressions      |   ✅   |                                                |
 | Match-expressions   |   ⬜   |                                                |
 | Struct definitions  |   ⬜   |                                                |
 | Enum definitions    |   ⬜   |                                                |
