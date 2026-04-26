@@ -306,7 +306,7 @@ TokenList tokenize(char* source_code)
         }
     }
 
-    if (!do_make_token && !do_make_token_string)
+    if (!do_make_token && !do_make_token_string && symbol_buffer_length > 0)
     {
         symbol_buffer[symbol_buffer_length] = 0;
         Token last_token = make_token(symbol_buffer, line, column);
