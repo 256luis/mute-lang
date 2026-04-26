@@ -59,7 +59,7 @@ once the program ends.
 | Type                  | Status | Remarks |
 |-----------------------|:------:|---------|
 | Variable declarations |   ⬜   |         |
-| Variable reassignment |   ⬜   |         |
+| Variable reassignment |   ✅   |         |
 | Constant declarations |   ⬜   |         |
 | Routine declarations  |   ⬜   |         |
 | Type aliases          |   ⬜   |         |

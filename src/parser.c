@@ -25,7 +25,7 @@
     TOK_IDENT, TOK_LBRACKET
 
 #define STATEMENT_STARTERS\
-    TOK_LET, TOK_IF, TOK_LBRACE
+    TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
 
 /*
   Macro for more convenient implementation of language grammar. Reports error and
@@ -507,7 +507,6 @@ static AstNode* parse_term(Parser* p)
                 UNIMPLEMENTED();
             }
         }
-
     }
 
     if (CHECK_NTH_TOKEN(p, 1, TOK_DOT, TOK_LPAREN, TOK_LBRACKET))
@@ -693,6 +692,24 @@ static AstNode* parse_stmt(Parser* p)
 
     switch (current_token(p).kind)
     {
+        // variable reassignment
+        case TOK_IDENT:
+        {
+            node = MALLOC(sizeof(AstNode));
+            node->kind = ANK_VARIABLE_ASSIGN;
+
+            node->variable_assign.lvalue = parse_lvalue(p);
+
+            advance(p);
+            EXPECT_TOKEN(p, TOK_EQUAL);
+
+            advance(p);
+            node->variable_assign.rvalue = parse_rvalue(p);
+
+            advance(p);
+            EXPECT_TOKEN(p, TOK_SEMICOLON);
+        } break;
+
         // variable declaration
         case TOK_LET:
         {
@@ -1047,6 +1064,24 @@ void print_ast_node(AstNode node)
                 AstNode stmt = node.compound.stmts.nodes[i];
                 print_ast_node(stmt);
             }
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_VARIABLE_ASSIGN:
+        {
+            printf("VARIABLE ASSIGN: {");
+            depth++;
+            NEWLINE();
+
+            printf("lvalue: ");
+            print_ast_node(*node.variable_assign.lvalue);
+            NEWLINE();
+
+            printf("rvalue: ");
+            print_ast_node(*node.variable_assign.rvalue);
 
             depth--;
             NEWLINE();
