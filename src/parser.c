@@ -25,7 +25,7 @@
     TOK_IDENT, TOK_LBRACKET
 
 #define STATEMENT_STARTERS\
-    TOK_RETURN, TOK_CONST, TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
+    TOK_WHILE, TOK_RETURN, TOK_CONST, TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
 
 /*
   Macro for more convenient implementation of language grammar. Reports error and
@@ -783,6 +783,19 @@ static AstNode* parse_stmt(Parser* p)
                 EXPECT_TOKEN(p, TOK_SEMICOLON);
             } break;
 
+            case TOK_WHILE:
+            {
+                node = MALLOC(sizeof(AstNode));
+                node->kind = ANK_WHILE;
+
+                advance(p);
+                node->while_stmt.cond = parse_rvalue(p);
+
+                advance(p);
+                EXPECT_TOKEN(p, TOK_LBRACE);
+                node->while_stmt.body = parse_compound(p);
+            } break;
+
             default:
             {
                 if (CHECK_TOKEN(p, RVALUE_STARTERS))
@@ -1150,6 +1163,24 @@ void print_ast_node(AstNode node)
 
             printf("rvalue: ");
             print_ast_node(*node.return_stmt.rvalue);
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_WHILE:
+        {
+            printf("WHILE {");
+            depth++;
+            NEWLINE();
+
+            printf("cond: ");
+            print_ast_node(*node.while_stmt.cond);
+
+            NEWLINE();
+            printf("body: ");
+            print_ast_node(*node.while_stmt.body);
 
             depth--;
             NEWLINE();

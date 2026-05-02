@@ -65,7 +65,7 @@ once the program ends.
 | Type aliases          |   ⬜   |         |
 | If-statements         |   ✅   |         |
 | Match-statements      |   ⬜   |         |
-| While-loops           |   ⬜   |         |
+| While-loops           |   ✅   |         |
 | For-loops             |   ⬜   |         |
 | Compound              |   ✅   |         |
 | Implicit returns      |   ✅   |         |

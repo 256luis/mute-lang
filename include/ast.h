@@ -16,6 +16,7 @@ typedef enum AstNodeKind
     ANK_VARIABLE_ASSIGN,
     ANK_CONST_DECL,
     ANK_RETURN,
+    ANK_WHILE,
 
     // base/rvalue
     ANK_ROUTINE_CALL,
@@ -186,6 +187,13 @@ typedef struct AstNode
             bool is_implicit;
             AstNode* rvalue;
         } return_stmt;
+
+
+        struct
+        {
+            AstNode* cond;
+            AstNode* body;
+        } while_stmt;
     };
 } AstNode;
 
