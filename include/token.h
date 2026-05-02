@@ -28,6 +28,7 @@ typedef enum TokenKind
     TOK_MATCH,
     TOK_FOR,
     TOK_MUT,
+    TOK_RETURN,
 
     // binary operators
     TOK_AND,

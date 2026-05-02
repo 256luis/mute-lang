@@ -64,6 +64,7 @@ static char* reserved_symbols[] = {
     [TOK_MATCH]       = "match",
     [TOK_FOR]         = "for",
     [TOK_MUT]         = "mut",
+    [TOK_RETURN]      = "return",
 
     [TOK_AND]         = "&",
     [TOK_LINE]        = "|",

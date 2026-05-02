@@ -25,7 +25,7 @@
     TOK_IDENT, TOK_LBRACKET
 
 #define STATEMENT_STARTERS\
-    TOK_CONST, TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
+    TOK_RETURN, TOK_CONST, TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
 
 /*
   Macro for more convenient implementation of language grammar. Reports error and
@@ -769,6 +769,18 @@ static AstNode* parse_stmt(Parser* p)
                 node = parse_compound(p);
             } break;
 
+            case TOK_RETURN:
+            {
+                node = MALLOC(sizeof(AstNode));
+                node->kind = ANK_RETURN;
+
+                advance(p);
+                node->return_stmt.rvalue = parse_rvalue(p);
+
+                advance(p);
+                EXPECT_TOKEN(p, TOK_SEMICOLON);
+            } break;
+
             default:
             {
                 if (CHECK_TOKEN(p, RVALUE_STARTERS))
@@ -1109,6 +1121,20 @@ void print_ast_node(AstNode node)
 
             printf("rvalue: ");
             print_ast_node(*node.variable_assign.rvalue);
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_RETURN:
+        {
+            printf("RETURN: {");
+            depth++;
+            NEWLINE();
+
+            printf("rvalue: ");
+            print_ast_node(*node.return_stmt.rvalue);
 
             depth--;
             NEWLINE();

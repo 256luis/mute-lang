@@ -15,6 +15,7 @@ typedef enum AstNodeKind
     ANK_COMPOUND,
     ANK_VARIABLE_ASSIGN,
     ANK_CONST_DECL,
+    ANK_RETURN,
 
     // base/rvalue
     ANK_ROUTINE_CALL,
@@ -179,6 +180,11 @@ typedef struct AstNode
             AstNode* lvalue;
             AstNode* rvalue;
         } variable_assign;
+
+        struct
+        {
+            AstNode* rvalue;
+        } return_stmt;
     };
 } AstNode;
 
