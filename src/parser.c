@@ -366,28 +366,6 @@ static AstNode* parse_type(Parser* p)
     return type_node;
 }
 
-static AstNode* parse_if(Parser* p)
-{
-    AstNode* node = MALLOC(sizeof(AstNode));
-    node->kind = ANK_IF;
-    node->if_stmt.on_false = NULL;
-
-    advance(p);
-    node->if_stmt.cond = parse_rvalue(p);
-
-    advance(p);
-    node->if_stmt.on_true = parse_stmt(p);
-
-    if (CHECK_NTH_TOKEN(p, 1, TOK_ELSE))
-    {
-        advance(p);
-        advance(p);
-        node->if_stmt.on_false = parse_stmt(p);
-    }
-
-    return node;
-}
-
 static AstNode* parse_compound(Parser* p)
 {
     AstNode* node = MALLOC(sizeof(AstNode));
@@ -400,6 +378,29 @@ static AstNode* parse_compound(Parser* p)
         AstNode* stmt = parse_stmt(p);
         anl_append(&node->compound.stmts, *stmt);
         advance(p);
+    }
+
+    return node;
+}
+
+static AstNode* parse_if(Parser* p)
+{
+    AstNode* node = MALLOC(sizeof(AstNode));
+    node->kind = ANK_IF;
+    node->if_stmt.on_false = NULL;
+
+    advance(p);
+    node->if_stmt.cond = parse_rvalue(p);
+
+    advance(p);
+    EXPECT_TOKEN(p, TOK_LBRACE);
+    node->if_stmt.on_true = parse_compound(p);
+
+    if (CHECK_NTH_TOKEN(p, 1, TOK_ELSE))
+    {
+        advance(p);
+        advance(p);
+        node->if_stmt.on_false = parse_stmt(p);
     }
 
     return node;
@@ -773,6 +774,7 @@ static AstNode* parse_stmt(Parser* p)
             {
                 node = MALLOC(sizeof(AstNode));
                 node->kind = ANK_RETURN;
+                node->return_stmt.is_implicit = false;
 
                 advance(p);
                 node->return_stmt.rvalue = parse_rvalue(p);
@@ -786,9 +788,19 @@ static AstNode* parse_stmt(Parser* p)
                 if (CHECK_TOKEN(p, RVALUE_STARTERS))
                 {
                     node = parse_rvalue(p);
+
+                    // implicit returns
                     if (!CHECK_NTH_TOKEN(p, 1, TOK_SEMICOLON))
                     {
-                        // TODO: implicit return
+                        AstNode* rvalue = node;
+                        node = MALLOC(sizeof(AstNode));
+                        node->kind = ANK_RETURN;
+                        node->return_stmt.is_implicit = true;
+                        node->return_stmt.rvalue = rvalue;
+                    }
+                    else
+                    {
+                        advance(p);
                     }
                 }
                 else
@@ -1131,6 +1143,9 @@ void print_ast_node(AstNode node)
         {
             printf("RETURN: {");
             depth++;
+            NEWLINE();
+
+            printf("is implicit: %s", node.return_stmt.is_implicit ? "true" : "false");
             NEWLINE();
 
             printf("rvalue: ");

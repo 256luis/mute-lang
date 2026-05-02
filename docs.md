@@ -68,3 +68,4 @@ once the program ends.
 | While-loops           |   ⬜   |         |
 | For-loops             |   ⬜   |         |
 | Compound              |   ✅   |         |
+| Implicit returns      |   ✅   |         |

@@ -183,6 +183,7 @@ typedef struct AstNode
 
         struct
         {
+            bool is_implicit;
             AstNode* rvalue;
         } return_stmt;
     };
