@@ -62,7 +62,7 @@ once the program ends.
 | Variable reassignment |   ✅   |         |
 | Constant declarations |   ✅   |         |
 | Routine declarations  |   ⬜   |         |
-| Type aliases          |   ⬜   |         |
+| Type aliases          |   ✅   |         |
 | If-statements         |   ✅   |         |
 | Match-statements      |   ⬜   |         |
 | While-loops           |   ✅   |         |

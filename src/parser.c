@@ -25,7 +25,7 @@
     TOK_IDENT, TOK_LBRACKET
 
 #define STATEMENT_STARTERS\
-    TOK_WHILE, TOK_RETURN, TOK_CONST, TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
+    TOK_TYPE, TOK_WHILE, TOK_RETURN, TOK_CONST, TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
 
 /*
   Macro for more convenient implementation of language grammar. Reports error and
@@ -796,6 +796,26 @@ static AstNode* parse_stmt(Parser* p)
                 node->while_stmt.body = parse_compound(p);
             } break;
 
+            // type declaration
+            case TOK_TYPE:
+            {
+                node = MALLOC(sizeof(AstNode));
+                node->kind = ANK_TYPE_DECL;
+
+                advance(p);
+                EXPECT_TOKEN(p, TOK_IDENT);
+                node->type_decl.identifier = current_token(p);
+
+                advance(p);
+                EXPECT_TOKEN(p, TOK_EQUAL);
+
+                advance(p);
+                node->type_decl.type_node = parse_rvalue(p);
+
+                advance(p);
+                EXPECT_TOKEN(p, TOK_SEMICOLON);
+            } break;
+
             default:
             {
                 if (CHECK_TOKEN(p, RVALUE_STARTERS))
@@ -1181,6 +1201,23 @@ void print_ast_node(AstNode node)
             NEWLINE();
             printf("body: ");
             print_ast_node(*node.while_stmt.body);
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_TYPE_DECL:
+        {
+            printf("TYPE DECL {");
+            depth++;
+            NEWLINE();
+
+            printf("identifier: %s", node.type_decl.identifier.string);
+
+            NEWLINE();
+            printf("type node: ");
+            print_ast_node(*node.type_decl.type_node);
 
             depth--;
             NEWLINE();

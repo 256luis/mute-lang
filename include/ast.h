@@ -17,6 +17,7 @@ typedef enum AstNodeKind
     ANK_CONST_DECL,
     ANK_RETURN,
     ANK_WHILE,
+    ANK_TYPE_DECL,
 
     // base/rvalue
     ANK_ROUTINE_CALL,
@@ -89,6 +90,12 @@ typedef struct AstNode
     {
         // for ANK_IDENT, ANK_INT, ANK_STRING
         Token terminal;
+
+        struct
+        {
+            Token identifier;
+            AstNode* type_node;
+        } type_decl;
 
         struct
         {
