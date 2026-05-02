@@ -405,6 +405,34 @@ static AstNode* parse_compound(Parser* p)
     return node;
 }
 
+static AstNode* parse_routine_call(Parser* p, AstNode* routine)
+{
+    AstNode* node = MALLOC(sizeof(AstNode));
+    node->kind = ANK_ROUTINE_CALL;
+    node->routine_call.routine = routine;
+    node->routine_call.args = anl_new();
+
+    advance(p);
+
+    // parse the args
+    while (!CHECK_TOKEN(p, TOK_RPAREN))
+    {
+        AstNode* arg = parse_rvalue(p);
+        anl_append(&node->routine_call.args, *arg);
+
+        advance(p);
+        EXPECT_TOKEN(p, TOK_COMMA, TOK_RPAREN);
+
+        if (CHECK_TOKEN(p, TOK_COMMA))
+        {
+            advance(p);
+            EXPECT_TOKEN(p, RVALUE_STARTERS);
+        }
+    }
+
+    return node;
+}
+
 /*
   Parses a single term in an expression. Expressions enclosed in parentheses count
   as a single term.
@@ -509,7 +537,7 @@ static AstNode* parse_term(Parser* p)
         }
     }
 
-    if (CHECK_NTH_TOKEN(p, 1, TOK_DOT, TOK_LPAREN, TOK_LBRACKET))
+    while (CHECK_NTH_TOKEN(p, 1, TOK_DOT, TOK_LPAREN, TOK_LBRACKET))
     {
         advance(p);
 
@@ -542,31 +570,7 @@ static AstNode* parse_term(Parser* p)
                 // routine call
                 case TOK_LPAREN:
                 {
-                    AstNode* routine = rvalue;
-                    rvalue = MALLOC(sizeof(AstNode));
-                    rvalue->kind = ANK_ROUTINE_CALL;
-                    rvalue->routine_call.routine = routine;
-                    rvalue->routine_call.args = anl_new();
-
-                    advance(p);
-
-                    // parse the args
-                    while (!CHECK_TOKEN(p, TOK_RPAREN))
-                    {
-                        AstNode* arg = parse_rvalue(p);
-                        anl_append(&rvalue->routine_call.args, *arg);
-
-                        advance(p);
-                        EXPECT_TOKEN(p, TOK_COMMA, TOK_RPAREN);
-
-                        if (CHECK_TOKEN(p, TOK_COMMA))
-                        {
-                            advance(p);
-                            EXPECT_TOKEN(p, RVALUE_STARTERS);
-                        }
-                    }
-
-                    // print_ast_node(rvalue->routine_call.args.nodes[0]);
+                    rvalue = parse_routine_call(p, rvalue);
                 } break;
 
                 // array index
@@ -579,7 +583,6 @@ static AstNode* parse_term(Parser* p)
 
                     advance(p);
                     rvalue->array_index.index = parse_rvalue(p);
-
                     advance(p);
                     EXPECT_TOKEN(p, TOK_RBRACKET);
                 } break;
@@ -686,89 +689,102 @@ static AstNode* parse_rvalue(Parser* p)
 */
 static AstNode* parse_stmt(Parser* p)
 {
-    EXPECT_TOKEN(p, STATEMENT_STARTERS);
+    EXPECT_TOKEN(p, STATEMENT_STARTERS, RVALUE_STARTERS);
 
     AstNode* node = NULL;
 
-    switch (current_token(p).kind)
+    // variable reassignment
+    if (CHECK_TOKEN_PATTERN(p, TOK_IDENT, TOK_EQUAL))
     {
-        // variable reassignment
-        case TOK_IDENT:
+        node = MALLOC(sizeof(AstNode));
+        node->kind = ANK_VARIABLE_ASSIGN;
+
+        node->variable_assign.lvalue = parse_lvalue(p);
+
+        advance(p);
+        EXPECT_TOKEN(p, TOK_EQUAL);
+
+        advance(p);
+        node->variable_assign.rvalue = parse_rvalue(p);
+
+        advance(p);
+        EXPECT_TOKEN(p, TOK_SEMICOLON);
+    }
+    else
+    {
+        switch (current_token(p).kind)
         {
-            node = MALLOC(sizeof(AstNode));
-            node->kind = ANK_VARIABLE_ASSIGN;
-
-            node->variable_assign.lvalue = parse_lvalue(p);
-
-            advance(p);
-            EXPECT_TOKEN(p, TOK_EQUAL);
-
-            advance(p);
-            node->variable_assign.rvalue = parse_rvalue(p);
-
-            advance(p);
-            EXPECT_TOKEN(p, TOK_SEMICOLON);
-        } break;
-
-        // variable & const  declaration
-        case TOK_CONST:
-        case TOK_LET:
-        {
-            node = MALLOC(sizeof(AstNode));
-
-            if (CHECK_TOKEN(p, TOK_LET))
-                node->kind = ANK_VARIABLE_DECL;
-            else
-                node->kind = ANK_CONST_DECL;
-
-            node->varconst_decl.is_mutable = false;
-            node->varconst_decl.type_node = NULL;
-
-            advance(p);
-            EXPECT_TOKEN(p, TOK_MUT, TOK_IDENT);
-
-            if (CHECK_TOKEN(p, TOK_MUT))
+            // variable & const  declaration
+            case TOK_CONST:
+            case TOK_LET:
             {
-                node->varconst_decl.is_mutable = true;
+                node = MALLOC(sizeof(AstNode));
+
+                if (CHECK_TOKEN(p, TOK_LET))
+                    node->kind = ANK_VARIABLE_DECL;
+                else
+                    node->kind = ANK_CONST_DECL;
+
+                node->varconst_decl.is_mutable = false;
+                node->varconst_decl.type_node = NULL;
+
                 advance(p);
-                EXPECT_TOKEN(p, TOK_IDENT);
-            }
+                EXPECT_TOKEN(p, TOK_MUT, TOK_IDENT);
 
-            node->varconst_decl.ident = current_token(p);
+                if (CHECK_TOKEN(p, TOK_MUT))
+                {
+                    node->varconst_decl.is_mutable = true;
+                    advance(p);
+                    EXPECT_TOKEN(p, TOK_IDENT);
+                }
 
-            advance(p);
-            EXPECT_TOKEN(p, TOK_EQUAL, TOK_COLON);
+                node->varconst_decl.ident = current_token(p);
 
-            if (CHECK_TOKEN(p, TOK_COLON))
+                advance(p);
+                EXPECT_TOKEN(p, TOK_EQUAL, TOK_COLON);
+
+                if (CHECK_TOKEN(p, TOK_COLON))
+                {
+                    advance(p);
+                    node->varconst_decl.type_node = parse_term(p);
+
+                    advance(p);
+                    EXPECT_TOKEN(p, TOK_EQUAL);
+                }
+
+                advance(p);
+                node->varconst_decl.rvalue = parse_rvalue(p);
+
+                advance(p);
+                EXPECT_TOKEN(p, TOK_SEMICOLON);
+            } break;
+
+            case TOK_IF:
             {
-                advance(p);
-                node->varconst_decl.type_node = parse_term(p);
+                node = parse_if(p);
+            } break;
 
-                advance(p);
-                EXPECT_TOKEN(p, TOK_EQUAL);
+            case TOK_LBRACE:
+            {
+                node = parse_compound(p);
+            } break;
+
+            default:
+            {
+                if (CHECK_TOKEN(p, RVALUE_STARTERS))
+                {
+                    node = parse_rvalue(p);
+                    if (!CHECK_NTH_TOKEN(p, 1, TOK_SEMICOLON))
+                    {
+                        // TODO: implicit return
+                    }
+                }
+                else
+                {
+                    print_token(current_token(p));
+                    UNIMPLEMENTED();
+                }
             }
-
-            advance(p);
-            node->varconst_decl.rvalue = parse_rvalue(p);
-
-            advance(p);
-            EXPECT_TOKEN(p, TOK_SEMICOLON);
-        } break;
-
-        case TOK_IF:
-        {
-            node = parse_if(p);
-        } break;
-
-        case TOK_LBRACE:
-        {
-            node = parse_compound(p);
-        } break;
-
-        default:
-        {
-            print_token(current_token(p));
-            UNIMPLEMENTED();
         }
     }
 
