@@ -16,7 +16,7 @@
 
 // List of TokenKinds that could be the beginning of an rvalue expression
 #define RVALUE_STARTERS\
-    TOK_LBRACE, TOK_IF, TOK_DOT, TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE, TOK_LBRACKET
+    TOK_STRUCT, TOK_LBRACE, TOK_IF, TOK_DOT, TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE, TOK_LBRACKET
 
 #define LVALUE_STARTERS\
     TOK_IDENT
@@ -530,6 +530,40 @@ static AstNode* parse_term(Parser* p)
             {
                 rvalue = parse_compound(p);
             } break;
+
+            // struct definition
+            case TOK_STRUCT:
+            {
+                rvalue = MALLOC(sizeof(AstNode));
+                rvalue->kind = ANK_STRUCT_TYPE;
+                rvalue->struct_type.member_type_nodes = anl_new();
+                rvalue->struct_type.member_idents = tl_new();
+
+                advance(p);
+                EXPECT_TOKEN(p, TOK_LBRACE);
+
+                advance(p);
+                while (!CHECK_TOKEN(p, TOK_RBRACE))
+                {
+                    EXPECT_TOKEN(p, TOK_IDENT);
+                    tl_append(&rvalue->struct_type.member_idents, current_token(p));
+
+                    advance(p);
+                    EXPECT_TOKEN(p, TOK_COLON);
+
+                    advance(p);
+                    AstNode* type_node = parse_rvalue(p);
+                    anl_append(&rvalue->struct_type.member_type_nodes, *type_node);
+
+                    advance(p);
+                    EXPECT_TOKEN(p, TOK_COMMA, TOK_RBRACE);
+                    if (CHECK_TOKEN(p, TOK_COMMA))
+                    {
+                        advance(p);
+                    }
+                }
+            } break;
+
 
             default:
             {
@@ -1218,6 +1252,26 @@ void print_ast_node(AstNode node)
             NEWLINE();
             printf("type node: ");
             print_ast_node(*node.type_decl.type_node);
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_STRUCT_TYPE:
+        {
+            printf("STRUCT TYPE {");
+            depth++;
+
+            for (size_t i = 0; i < node.struct_type.member_idents.count; i++)
+            {
+                NEWLINE();
+                Token ident = node.struct_type.member_idents.tokens[i];
+                AstNode type_node = node.struct_type.member_type_nodes.nodes[i];
+
+                printf("%s: ", ident.string);
+                print_ast_node(type_node);
+            }
 
             depth--;
             NEWLINE();

@@ -50,7 +50,7 @@ once the program ends.
 | Struct initializer  |   ✅   |                                                |
 | If-expressions      |   ✅   |                                                |
 | Match-expressions   |   ⬜   |                                                |
-| Struct definitions  |   ⬜   |                                                |
+| Struct definitions  |   ✅   |                                                |
 | Enum definitions    |   ⬜   |                                                |
 | Field access        |   ✅   |                                                |
 | Compound            |   ✅   |                                                |

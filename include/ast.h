@@ -33,6 +33,7 @@ typedef enum AstNodeKind
     ANK_ARRAY_TYPE,
     ANK_ARRAY_INIT,
     ANK_STRUCT_INIT,
+    ANK_STRUCT_TYPE,
 
     // lvalue/rvalue
     ANK_IDENT,
@@ -195,12 +196,17 @@ typedef struct AstNode
             AstNode* rvalue;
         } return_stmt;
 
-
         struct
         {
             AstNode* cond;
             AstNode* body;
         } while_stmt;
+
+        struct
+        {
+            AstNodeList member_type_nodes;
+            TokenList member_idents;
+        } struct_type;
     };
 } AstNode;
 
