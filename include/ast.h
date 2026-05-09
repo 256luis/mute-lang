@@ -4,6 +4,8 @@
 #include "token.h"
 #include <stdbool.h>
 
+#define ASTNODE_NONE ((AstNode){ .kind = ANK_NONE })
+
 typedef struct AstNode AstNode;
 
 // Enum containing the different kinds of nodes based on the language's grammar
@@ -34,12 +36,16 @@ typedef enum AstNodeKind
     ANK_ARRAY_INIT,
     ANK_STRUCT_INIT,
     ANK_STRUCT_TYPE,
+    ANK_ENUM_TYPE,
 
     // lvalue/rvalue
     ANK_IDENT,
 
     // sometimes valid lvalue, sometimes not
     ANK_FIELD_ACCESS,
+
+    // special case, not really a result of parsing anything
+    ANK_NONE,
 } AstNodeKind;
 
 /*
@@ -207,6 +213,12 @@ typedef struct AstNode
             AstNodeList member_type_nodes;
             TokenList member_idents;
         } struct_type;
+
+        struct
+        {
+            TokenList variant_idents;
+            AstNodeList variant_type_nodes;
+        } enum_type;
     };
 } AstNode;
 

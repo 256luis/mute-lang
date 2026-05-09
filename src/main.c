@@ -19,4 +19,5 @@ int main(int argc, char* argv[])
     /* } */
     AstNode* ast = parse(tl);
     print_ast_node(*ast);
+    printf("\n");
 }

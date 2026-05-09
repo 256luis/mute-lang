@@ -51,7 +51,7 @@ once the program ends.
 | If-expressions      |   ✅   |                                                |
 | Match-expressions   |   ⬜   |                                                |
 | Struct definitions  |   ✅   |                                                |
-| Enum definitions    |   ⬜   |                                                |
+| Enum definitions    |   ✅   |                                                |
 | Field access        |   ✅   |                                                |
 | Compound            |   ✅   |                                                |
 
