@@ -16,7 +16,7 @@
 
 // List of TokenKinds that could be the beginning of an rvalue expression
 #define RVALUE_STARTERS\
-    TOK_ENUM, TOK_STRUCT, TOK_LBRACE, TOK_IF, TOK_DOT, TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE, TOK_LBRACKET
+    TOK_PROC, TOK_FUNC, TOK_ENUM, TOK_STRUCT, TOK_LBRACE, TOK_IF, TOK_DOT, TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE, TOK_LBRACKET
 
 #define LVALUE_STARTERS\
     TOK_IDENT
@@ -608,6 +608,54 @@ static AstNode* parse_term(Parser* p)
                     anl_append(&rvalue->enum_type.variant_type_nodes, *type_node);
                 }
 
+            } break;
+
+            // routine definition
+            case TOK_PROC:
+            case TOK_FUNC:
+            {
+                rvalue = MALLOC(sizeof(AstNode));
+                rvalue->kind = ANK_ROUTINE_DEF;
+                rvalue->routine_def.is_proc = CHECK_TOKEN(p, TOK_PROC);
+                rvalue->routine_def.param_idents = tl_new();
+                rvalue->routine_def.param_type_nodes = anl_new();
+                rvalue->routine_def.return_type_node = NULL;
+
+                advance(p);
+                EXPECT_TOKEN(p, TOK_LPAREN);
+
+                advance(p);
+                while (!CHECK_TOKEN(p, TOK_RPAREN))
+                {
+                    EXPECT_TOKEN(p, TOK_IDENT);
+
+                    Token ident = current_token(p);
+                    tl_append(&rvalue->routine_def.param_idents, ident);
+
+                    advance(p);
+                    EXPECT_TOKEN(p, TOK_COLON);
+
+                    advance(p);
+                    AstNode* type_node = parse_rvalue(p);
+                    anl_append(&rvalue->routine_def.param_type_nodes, *type_node);
+
+                    advance(p);
+                    EXPECT_TOKEN(p, TOK_COMMA, TOK_RPAREN);
+                    if (CHECK_TOKEN(p, TOK_COMMA))
+                    {
+                        advance(p);
+                    }
+                }
+
+                advance(p);
+                if (CHECK_TOKEN(p, TOK_ARROW))
+                {
+                    advance(p);
+                    rvalue->routine_def.return_type_node = parse_rvalue(p);
+                    advance(p);
+                }
+
+                rvalue->routine_def.body = parse_rvalue(p);
             } break;
 
             default:
@@ -1337,6 +1385,41 @@ void print_ast_node(AstNode node)
                 printf("%s: ", ident.string);
                 print_ast_node(type_node);
             }
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_ROUTINE_DEF:
+        {
+            printf("ENUM ROUTINE DEF {");
+            depth++;
+
+            NEWLINE();
+            printf("params: [");
+            depth++;
+
+            for (size_t i = 0; i < node.routine_def.param_idents.count; i++)
+            {
+                NEWLINE();
+                Token ident = node.routine_def.param_idents.tokens[i];
+                AstNode type_node = node.routine_def.param_type_nodes.nodes[i];
+
+                printf("%s: ", ident.string);
+                print_ast_node(type_node);
+            }
+            depth--;
+            NEWLINE();
+            printf("]");
+
+            NEWLINE();
+            printf("return type: ");
+            print_ast_node(*node.routine_def.return_type_node);
+
+            NEWLINE();
+            printf("body: ");
+            print_ast_node(*node.routine_def.body);
 
             depth--;
             NEWLINE();

@@ -37,6 +37,7 @@ typedef enum AstNodeKind
     ANK_STRUCT_INIT,
     ANK_STRUCT_TYPE,
     ANK_ENUM_TYPE,
+    ANK_ROUTINE_DEF,
 
     // lvalue/rvalue
     ANK_IDENT,
@@ -45,6 +46,7 @@ typedef enum AstNodeKind
     ANK_FIELD_ACCESS,
 
     // special case, not really a result of parsing anything
+    // for use in AstNodeList ONLY
     ANK_NONE,
 } AstNodeKind;
 
@@ -219,6 +221,15 @@ typedef struct AstNode
             TokenList variant_idents;
             AstNodeList variant_type_nodes;
         } enum_type;
+
+        struct
+        {
+            bool is_proc; //  is proc or func?
+            TokenList param_idents;
+            AstNodeList param_type_nodes;
+            AstNode* body;
+            AstNode* return_type_node; // can be null
+        } routine_def;
     };
 } AstNode;
 

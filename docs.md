@@ -43,7 +43,7 @@ once the program ends.
 | Binary expressions  |   ⏳   | Operator precedence is currently unimplemented |
 | Unary expressions   |   ✅   |                                                |
 | Routine calls       |   ✅   |                                                |
-| Routine definitions |   ⬜   |                                                |
+| Routine definitions |   ✅   |                                                |
 | Array initializer   |   ✅   |                                                |
 | Array types         |   ✅   |                                                |
 | Array index         |   ✅   |                                                |
