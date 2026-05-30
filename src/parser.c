@@ -22,7 +22,7 @@
     TOK_IDENT
 
 #define TYPE_STARTERS\
-    TOK_IDENT, TOK_LBRACKET
+    TOK_STRUCT, TOK_IDENT, TOK_LBRACKET
 
 #define STATEMENT_STARTERS\
     TOK_TYPE, TOK_WHILE, TOK_RETURN, TOK_CONST, TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
@@ -357,6 +357,39 @@ static AstNode* parse_type(Parser* p)
             type_node->array_type_node.child_type_node = parse_type(p);
         } break;
 
+        // struct definition
+        case TOK_STRUCT:
+        {
+            type_node = MALLOC(sizeof(AstNode));
+            type_node->kind = ANK_STRUCT_TYPE;
+            type_node->struct_type.member_type_nodes = anl_new();
+            type_node->struct_type.member_idents = tl_new();
+
+            advance(p);
+            EXPECT_TOKEN(p, TOK_LBRACE);
+
+            advance(p);
+            while (!CHECK_TOKEN(p, TOK_RBRACE))
+            {
+                EXPECT_TOKEN(p, TOK_IDENT);
+                tl_append(&type_node->struct_type.member_idents, current_token(p));
+
+                advance(p);
+                EXPECT_TOKEN(p, TOK_COLON);
+
+                advance(p);
+                AstNode* member_type_node = parse_rvalue(p);
+                anl_append(&type_node->struct_type.member_type_nodes, *member_type_node);
+
+                advance(p);
+                EXPECT_TOKEN(p, TOK_COMMA, TOK_RBRACE);
+                if (CHECK_TOKEN(p, TOK_COMMA))
+                {
+                    advance(p);
+                }
+            }
+        } break;
+
         default:
         {
             UNREACHABLE();
@@ -534,34 +567,7 @@ static AstNode* parse_term(Parser* p)
             // struct definition
             case TOK_STRUCT:
             {
-                rvalue = MALLOC(sizeof(AstNode));
-                rvalue->kind = ANK_STRUCT_TYPE;
-                rvalue->struct_type.member_type_nodes = anl_new();
-                rvalue->struct_type.member_idents = tl_new();
-
-                advance(p);
-                EXPECT_TOKEN(p, TOK_LBRACE);
-
-                advance(p);
-                while (!CHECK_TOKEN(p, TOK_RBRACE))
-                {
-                    EXPECT_TOKEN(p, TOK_IDENT);
-                    tl_append(&rvalue->struct_type.member_idents, current_token(p));
-
-                    advance(p);
-                    EXPECT_TOKEN(p, TOK_COLON);
-
-                    advance(p);
-                    AstNode* type_node = parse_rvalue(p);
-                    anl_append(&rvalue->struct_type.member_type_nodes, *type_node);
-
-                    advance(p);
-                    EXPECT_TOKEN(p, TOK_COMMA, TOK_RBRACE);
-                    if (CHECK_TOKEN(p, TOK_COMMA))
-                    {
-                        advance(p);
-                    }
-                }
+                rvalue = parse_type(p);
             } break;
 
             // enum definition
