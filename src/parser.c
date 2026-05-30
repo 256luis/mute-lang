@@ -22,7 +22,7 @@
     TOK_IDENT
 
 #define TYPE_STARTERS\
-    TOK_STRUCT, TOK_IDENT, TOK_LBRACKET
+    TOK_ENUM, TOK_STRUCT, TOK_IDENT, TOK_LBRACKET
 
 #define STATEMENT_STARTERS\
     TOK_TYPE, TOK_WHILE, TOK_RETURN, TOK_CONST, TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
@@ -390,6 +390,50 @@ static AstNode* parse_type(Parser* p)
             }
         } break;
 
+        case TOK_ENUM:
+        {
+            type_node = MALLOC(sizeof(AstNode));
+            type_node->kind = ANK_ENUM_TYPE;
+            type_node->enum_type.variant_idents = tl_new();
+            type_node->enum_type.variant_type_nodes = anl_new();
+
+            advance(p);
+            EXPECT_TOKEN(p, TOK_LBRACE);
+
+            advance(p);
+            while (!CHECK_TOKEN(p, TOK_RBRACE))
+            {
+                EXPECT_TOKEN(p, TOK_IDENT);
+                tl_append(&type_node->enum_type.variant_idents, current_token(p));
+
+                AstNode* variant_type_node = MALLOC(sizeof(AstNode));
+                *variant_type_node = ASTNODE_NONE;
+
+                advance(p);
+                EXPECT_TOKEN(p, TOK_COMMA, TOK_LPAREN, TOK_RBRACE);
+                if (CHECK_TOKEN(p, TOK_LPAREN))
+                {
+                    advance(p);
+                    variant_type_node = parse_rvalue(p);
+
+                    advance(p);
+                    EXPECT_TOKEN(p, TOK_RPAREN);
+
+                    advance(p);
+                    EXPECT_TOKEN(p, TOK_COMMA, TOK_RBRACE);
+                }
+
+                switch (current_token(p).kind)
+                {
+                    case TOK_COMMA: advance(p); break;
+                    case TOK_RBRACE: /* do nothing */ break;
+                    default: UNREACHABLE();
+                }
+
+                anl_append(&type_node->enum_type.variant_type_nodes, *variant_type_node);
+            }
+        } break;
+
         default:
         {
             UNREACHABLE();
@@ -548,8 +592,10 @@ static AstNode* parse_term(Parser* p)
                 rvalue = parse_unary(p);
             } break;
 
-            // array type
+            // types
             case TOK_LBRACKET:
+            case TOK_STRUCT:
+            case TOK_ENUM:
             {
                 rvalue = parse_type(p);
             } break;
@@ -564,57 +610,7 @@ static AstNode* parse_term(Parser* p)
                 rvalue = parse_compound(p);
             } break;
 
-            // struct definition
-            case TOK_STRUCT:
-            {
-                rvalue = parse_type(p);
-            } break;
-
             // enum definition
-            case TOK_ENUM:
-            {
-                rvalue = MALLOC(sizeof(AstNode));
-                rvalue->kind = ANK_ENUM_TYPE;
-                rvalue->enum_type.variant_idents = tl_new();
-                rvalue->enum_type.variant_type_nodes = anl_new();
-
-                advance(p);
-                EXPECT_TOKEN(p, TOK_LBRACE);
-
-                advance(p);
-                while (!CHECK_TOKEN(p, TOK_RBRACE))
-                {
-                    EXPECT_TOKEN(p, TOK_IDENT);
-                    tl_append(&rvalue->enum_type.variant_idents, current_token(p));
-
-                    AstNode* type_node = MALLOC(sizeof(AstNode));
-                    *type_node = ASTNODE_NONE;
-
-                    advance(p);
-                    EXPECT_TOKEN(p, TOK_COMMA, TOK_LPAREN, TOK_RBRACE);
-                    if (CHECK_TOKEN(p, TOK_LPAREN))
-                    {
-                        advance(p);
-                        type_node = parse_rvalue(p);
-
-                        advance(p);
-                        EXPECT_TOKEN(p, TOK_RPAREN);
-
-                        advance(p);
-                        EXPECT_TOKEN(p, TOK_COMMA, TOK_RBRACE);
-                    }
-
-                    switch (current_token(p).kind)
-                    {
-                        case TOK_COMMA: advance(p); break;
-                        case TOK_RBRACE: /* do nothing */ break;
-                        default: UNREACHABLE();
-                    }
-
-                    anl_append(&rvalue->enum_type.variant_type_nodes, *type_node);
-                }
-
-            } break;
 
             // routine definition
             case TOK_PROC:
