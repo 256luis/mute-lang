@@ -37,7 +37,7 @@ typedef enum AstNodeKind
     ANK_STRUCT_INIT,
     ANK_STRUCT_TYPE,
     ANK_ENUM_TYPE,
-    ANK_ROUTINE_DEF,
+    ANK_ROUTINE_LIT,
 
     // lvalue/rvalue
     ANK_IDENT,
@@ -229,7 +229,7 @@ typedef struct AstNode
             AstNodeList param_type_nodes;
             AstNode* body;
             AstNode* return_type_node; // can be null
-        } routine_def;
+        } routine_lit;
     };
 } AstNode;
 
