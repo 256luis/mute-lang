@@ -477,7 +477,15 @@ static AstNode* parse_if(Parser* p)
     {
         advance(p);
         advance(p);
-        node->if_stmt.on_false = parse_stmt(p);
+
+        if (CHECK_TOKEN(p, TOK_IF))
+        {
+            node->if_stmt.on_false = parse_if(p);
+        }
+        else
+        {
+            node->if_stmt.on_false = parse_compound(p);
+        }
     }
 
     return node;
