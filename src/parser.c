@@ -1415,9 +1415,12 @@ void print_ast_node(AstNode node)
             NEWLINE();
             printf("]");
 
-            NEWLINE();
-            printf("return type: ");
-            print_ast_node(*node.routine_lit.return_type_node);
+            if (node.routine_lit.return_type_node != NULL)
+            {
+                NEWLINE();
+                printf("return type: ");
+                print_ast_node(*node.routine_lit.return_type_node);
+            }
 
             NEWLINE();
             printf("body: ");
