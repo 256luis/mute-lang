@@ -304,10 +304,11 @@ while condition {
     ...
 }
 
-for let mut i = 0; i < N; i++ {
+for mut i = 0; i < N; i += 1; {
     ...
 }
 ```
+> **NOTE:** Notice the semicolon after `i += 1`.
 
 The `break` keyword can be used to break from a loop and the `continue` keyword can
 be used skip the rest of the current iteration and proceed to the next one.

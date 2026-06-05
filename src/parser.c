@@ -25,7 +25,7 @@
     TOK_ENUM, TOK_STRUCT, TOK_IDENT, TOK_LBRACKET
 
 #define STATEMENT_STARTERS\
-    TOK_TYPE, TOK_WHILE, TOK_RETURN, TOK_CONST, TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
+    TOK_FOR, TOK_TYPE, TOK_WHILE, TOK_RETURN, TOK_CONST, TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
 
 /*
   Macro for more convenient implementation of language grammar. Reports error and
@@ -272,7 +272,6 @@ static AstNode* parse_array_init(Parser* p, AstNode* type_node)
         if (CHECK_TOKEN(p, TOK_COMMA))
         {
             advance(p);
-            // EXPECT_TOKEN(p, RVALUE_STARTERS);
         }
     }
 
@@ -817,6 +816,79 @@ static AstNode* parse_rvalue(Parser* p)
     return rvalue;
 }
 
+static AstNode* parse_for(Parser* p)
+{
+    AstNode* node = MALLOC(sizeof(AstNode));
+    node->kind = ANK_FOR;
+
+    advance(p);
+    EXPECT_TOKEN(p, TOK_MUT, TOK_IDENT, TOK_SEMICOLON);
+
+    // parsing init
+    if (CHECK_TOKEN(p, TOK_SEMICOLON))
+    {
+        node->for_loop.init = NULL;
+    }
+    else
+    {
+        AstNode* init = MALLOC(sizeof(AstNode));
+        init->kind = ANK_VARIABLE_DECL;
+
+        if (CHECK_TOKEN(p, TOK_MUT))
+        {
+            init->varconst_decl.is_mutable = true;
+            advance(p);
+            EXPECT_TOKEN(p, TOK_IDENT);
+        }
+        else
+        {
+            init->varconst_decl.is_mutable = false;
+        }
+
+        init->varconst_decl.ident = current_token(p);
+
+        advance(p);
+        EXPECT_TOKEN(p, TOK_EQUAL, TOK_COLON);
+
+        if (CHECK_TOKEN(p, TOK_COLON))
+        {
+            advance(p);
+            init->varconst_decl.type_node = parse_term(p);
+
+            advance(p);
+            EXPECT_TOKEN(p, TOK_EQUAL);
+        }
+        else
+        {
+            init->varconst_decl.type_node = NULL;
+        }
+
+        advance(p);
+        init->varconst_decl.rvalue = parse_rvalue(p);
+
+        advance(p);
+        EXPECT_TOKEN(p, TOK_SEMICOLON);
+
+        node->for_loop.init = init;
+    }
+
+    // parsing condition
+    advance(p);
+    node->for_loop.cond = parse_rvalue(p);
+
+    advance(p);
+    EXPECT_TOKEN(p, TOK_SEMICOLON);
+
+    // parsing update
+    advance(p);
+    node->for_loop.update = parse_stmt(p);
+
+    advance(p);
+    node->for_loop.body = parse_compound(p);
+
+    return node;
+}
+
 /*
   Parses a statement.
 
@@ -951,6 +1023,11 @@ static AstNode* parse_stmt(Parser* p)
 
                 advance(p);
                 EXPECT_TOKEN(p, TOK_SEMICOLON);
+            } break;
+
+            case TOK_FOR:
+            {
+                node = parse_for(p);
             } break;
 
             default:
@@ -1433,6 +1510,35 @@ void print_ast_node(AstNode node)
             NEWLINE();
             printf("body: ");
             print_ast_node(*node.routine_lit.body);
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_FOR:
+        {
+            printf("FOR {");
+            depth++;
+            NEWLINE();
+
+            if (node.for_loop.init != NULL)
+            {
+                printf("init: ");
+                print_ast_node(*node.for_loop.init);
+                NEWLINE();
+            }
+
+            printf("cond: ");
+            print_ast_node(*node.for_loop.cond);
+            NEWLINE();
+
+            printf("update: ");
+            print_ast_node(*node.for_loop.update);
+            NEWLINE();
+
+            printf("body: ");
+            print_ast_node(*node.for_loop.body);
 
             depth--;
             NEWLINE();

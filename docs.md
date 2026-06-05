@@ -61,11 +61,10 @@ once the program ends.
 | Variable declarations |   ✅   |         |
 | Variable reassignment |   ✅   |         |
 | Constant declarations |   ✅   |         |
-| Routine declarations  |   ⬜   |         |
 | Type aliases          |   ✅   |         |
 | If-statements         |   ✅   |         |
 | Match-statements      |   ⬜   |         |
 | While-loops           |   ✅   |         |
-| For-loops             |   ⬜   |         |
+| For-loops             |   ✅   |         |
 | Compound              |   ✅   |         |
 | Implicit returns      |   ✅   |         |

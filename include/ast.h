@@ -20,6 +20,7 @@ typedef enum AstNodeKind
     ANK_RETURN,
     ANK_WHILE,
     ANK_TYPE_DECL,
+    ANK_FOR,
 
     // base/rvalue
     ANK_ROUTINE_CALL,
@@ -230,6 +231,14 @@ typedef struct AstNode
             AstNode* body;
             AstNode* return_type_node; // can be null
         } routine_lit;
+
+        struct
+        {
+            AstNode* init; // can be null
+            AstNode* cond;
+            AstNode* update;
+            AstNode* body;
+        } for_loop;
     };
 } AstNode;
 
