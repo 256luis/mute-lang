@@ -13,7 +13,6 @@
 typedef enum TokenKind
 {
     // reserved keywords
-    TOK_ROUTINE,
     TOK_FUNC,
     TOK_PROC,
     TOK_ECHO,

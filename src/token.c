@@ -49,7 +49,6 @@ void tl_append(TokenList* tl, Token token)
 
 #define TOK_SPECIAL_SYMBOLS_START TOK_AND
 static char* reserved_symbols[] = {
-    [TOK_ROUTINE]     = "routine",
     [TOK_FUNC]        = "func",
     [TOK_PROC]        = "proc",
     [TOK_ECHO]        = "echo",

@@ -225,16 +225,15 @@ Functions are routines that **must** return a value, and **must not** cause any
 side-effects. In other words, they are pure functions. Values can be returned using
 the `return` keyword. Implicit returns, or the omission of the `return` keyword when
 the value to be returned is at the end of the function, are allowed.
-
-Routines can be declared using the `routine` keyword.
 ```
+
 # a procedure
-routine greet = proc(name: []char) {
+const greet = proc(name: []char) {
     echo "Hello, ", name "!";
 };
 
 # a function
-routine add = func(a: int, b: int) -> int {
+const add = func(a: int, b: int) -> int {
     a + b
 };
 ```
