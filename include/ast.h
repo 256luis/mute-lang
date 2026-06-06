@@ -25,6 +25,7 @@ typedef enum AstNodeKind
     // base/rvalue
     ANK_ROUTINE_CALL,
     ANK_IF,
+    ANK_MATCH,
 
     // just rvalue
     ANK_STRING,
@@ -239,6 +240,15 @@ typedef struct AstNode
             AstNode* update;
             AstNode* body;
         } for_loop;
+
+        struct
+        {
+            AstNode* expr;
+
+            // if the AstNodeKind of a case is NONE, its the else case
+            AstNodeList cases;
+            AstNodeList case_bodies;
+        } match;
     };
 } AstNode;
 

@@ -1,3 +1,4 @@
+
 # Project Documentation
 
 ## Table of contents
@@ -49,22 +50,22 @@ once the program ends.
 | Array index         |   ✅   |                                                |
 | Struct initializer  |   ✅   |                                                |
 | If-expressions      |   ✅   |                                                |
-| Match-expressions   |   ⬜   |                                                |
+| Match-expressions   |   ⏳   | Currently just switch statements               |
 | Struct definitions  |   ✅   |                                                |
 | Enum definitions    |   ✅   |                                                |
 | Field access        |   ✅   |                                                |
 | Compound            |   ✅   |                                                |
 
 #### Statements
-| Type                  | Status | Remarks |
-|-----------------------|:------:|---------|
-| Variable declarations |   ✅   |         |
-| Variable reassignment |   ✅   |         |
-| Constant declarations |   ✅   |         |
-| Type aliases          |   ✅   |         |
-| If-statements         |   ✅   |         |
-| Match-statements      |   ⬜   |         |
-| While-loops           |   ✅   |         |
-| For-loops             |   ✅   |         |
-| Compound              |   ✅   |         |
-| Implicit returns      |   ✅   |         |
+| Type                  | Status | Remarks                          |
+|-----------------------|:------:|----------------------------------|
+| Variable declarations |   ✅   |                                  |
+| Variable reassignment |   ✅   |                                  |
+| Constant declarations |   ✅   |                                  |
+| Type aliases          |   ✅   |                                  |
+| If-statements         |   ✅   |                                  |
+| Match-statements      |   ⏳   | Currently just switch statements |
+| While-loops           |   ✅   |                                  |
+| For-loops             |   ✅   |                                  |
+| Compound              |   ✅   |                                  |
+| Implicit returns      |   ✅   |                                  |

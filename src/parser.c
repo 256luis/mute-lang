@@ -16,7 +16,7 @@
 
 // List of TokenKinds that could be the beginning of an rvalue expression
 #define RVALUE_STARTERS\
-    TOK_PROC, TOK_FUNC, TOK_ENUM, TOK_STRUCT, TOK_LBRACE, TOK_IF, TOK_DOT, TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE, TOK_LBRACKET
+    TOK_MATCH, TOK_PROC, TOK_FUNC, TOK_ENUM, TOK_STRUCT, TOK_LBRACE, TOK_IF, TOK_DOT, TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE, TOK_LBRACKET
 
 #define LVALUE_STARTERS\
     TOK_IDENT
@@ -25,7 +25,7 @@
     TOK_ENUM, TOK_STRUCT, TOK_IDENT, TOK_LBRACKET
 
 #define STATEMENT_STARTERS\
-    TOK_FOR, TOK_TYPE, TOK_WHILE, TOK_RETURN, TOK_CONST, TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
+    TOK_MATCH, TOK_FOR, TOK_TYPE, TOK_WHILE, TOK_RETURN, TOK_CONST, TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
 
 /*
   Macro for more convenient implementation of language grammar. Reports error and
@@ -518,6 +518,53 @@ static AstNode* parse_routine_call(Parser* p, AstNode* routine)
     return node;
 }
 
+static AstNode* parse_match(Parser* p)
+{
+    AstNode* node = MALLOC(sizeof(AstNode));
+    node->kind = ANK_MATCH;
+    node->match.cases = anl_new();
+    node->match.case_bodies = anl_new();
+
+    advance(p);
+    node->match.expr = parse_rvalue(p);
+
+    advance(p);
+    EXPECT_TOKEN(p, TOK_LBRACE);
+
+    advance(p);
+    while (!CHECK_TOKEN(p, TOK_RBRACE))
+    {
+        EXPECT_TOKEN(p, RVALUE_STARTERS, TOK_ELSE);
+        if (CHECK_TOKEN(p, RVALUE_STARTERS))
+        {
+            AstNode* case_node = parse_rvalue(p);
+            anl_append(&node->match.cases, *case_node);
+        }
+        else
+        {
+            anl_append(&node->match.cases, ASTNODE_NONE);
+        }
+
+        advance(p);
+        EXPECT_TOKEN(p, TOK_ARROW);
+
+        advance(p);
+        AstNode* case_body = parse_stmt(p);
+
+        anl_append(&node->match.case_bodies, *case_body);
+
+        advance(p);
+        EXPECT_TOKEN(p, TOK_COMMA, TOK_RBRACE);
+
+        if (CHECK_TOKEN(p, TOK_COMMA))
+        {
+            advance(p);
+        }
+    }
+
+    return node;
+}
+
 /*
   Parses a single term in an expression. Expressions enclosed in parentheses count
   as a single term.
@@ -665,6 +712,11 @@ static AstNode* parse_term(Parser* p)
                 }
 
                 rvalue->routine_lit.body = parse_rvalue(p);
+            } break;
+
+            case TOK_MATCH:
+            {
+                rvalue = parse_match(p);
             } break;
 
             default:
@@ -1028,6 +1080,11 @@ static AstNode* parse_stmt(Parser* p)
             case TOK_FOR:
             {
                 node = parse_for(p);
+            } break;
+
+            case TOK_MATCH:
+            {
+                node = parse_match(p);
             } break;
 
             default:
@@ -1539,6 +1596,29 @@ void print_ast_node(AstNode node)
 
             printf("body: ");
             print_ast_node(*node.for_loop.body);
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_MATCH:
+        {
+            printf("MATCH {");
+            depth++;
+
+            for (size_t i = 0; i < node.match.cases.count; i++)
+            {
+                NEWLINE();
+                printf("case: ");
+                AstNode case_node = node.match.cases.nodes[i];
+                print_ast_node(case_node);
+
+                NEWLINE();
+                printf("case body: ");
+                AstNode case_body = node.match.case_bodies.nodes[i];
+                print_ast_node(case_body);
+            }
 
             depth--;
             NEWLINE();
