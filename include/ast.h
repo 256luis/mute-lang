@@ -86,6 +86,7 @@ typedef enum BinaryOperator
 typedef enum UnaryOperator
 {
     UO_NEG,
+    UO_REF,
 
     UO_LOG_NOT,
     UO_BIT_NOT,

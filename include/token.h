@@ -30,7 +30,6 @@ typedef enum TokenKind
     TOK_RETURN,
 
     // binary operators
-    TOK_AND,
     TOK_LINE,
     TOK_PLUS,
     TOK_CARET,
@@ -50,6 +49,7 @@ typedef enum TokenKind
 
     // binary/unary operators
     TOK_DASH,
+    TOK_AND,
 
     // unary operators
     TOK_BANG,

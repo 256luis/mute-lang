@@ -65,7 +65,6 @@ static char* reserved_symbols[] = {
     [TOK_MUT]         = "mut",
     [TOK_RETURN]      = "return",
 
-    [TOK_AND]         = "&",
     [TOK_LINE]        = "|",
     [TOK_PLUS]        = "+",
     [TOK_CARET]       = "^",
@@ -83,6 +82,7 @@ static char* reserved_symbols[] = {
     [TOK_RSHIFT]      = ">>",
 
     [TOK_DASH]        = "-",
+    [TOK_AND]         = "&",
     [TOK_STAR]        = "*",
 
     [TOK_BANG]        = "!",

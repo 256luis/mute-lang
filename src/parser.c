@@ -16,7 +16,7 @@
 
 // List of TokenKinds that could be the beginning of an rvalue expression
 #define RVALUE_STARTERS\
-    TOK_MATCH, TOK_PROC, TOK_FUNC, TOK_ENUM, TOK_STRUCT, TOK_LBRACE, TOK_IF, TOK_DOT, TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE, TOK_LBRACKET
+    TOK_AND, TOK_MATCH, TOK_PROC, TOK_FUNC, TOK_ENUM, TOK_STRUCT, TOK_LBRACE, TOK_IF, TOK_DOT, TOK_IDENT, TOK_NUM, TOK_STRING, TOK_LPAREN, TOK_DASH, TOK_BANG, TOK_TILDE, TOK_LBRACKET
 
 #define LVALUE_STARTERS\
     TOK_IDENT
@@ -216,6 +216,7 @@ static UnaryOperator token_kind_to_unary_operator(TokenKind tk)
 {
     static UnaryOperator map[] = {
         [TOK_DASH] = UO_NEG,
+        [TOK_AND] = UO_REF,
         [TOK_BANG] = UO_LOG_NOT,
         [TOK_TILDE] = UO_BIT_NOT,
     };
@@ -326,6 +327,11 @@ static AstNode* parse_type(Parser* p)
 
     switch (current_token(p).kind)
     {
+        case TOK_AND:
+        {
+            type_node = parse_unary(p);
+        } break;
+
         case TOK_IDENT:
         {
             // identical to what's in parse_term
@@ -642,6 +648,7 @@ static AstNode* parse_term(Parser* p)
             case TOK_DASH:
             case TOK_BANG:
             case TOK_TILDE:
+            case TOK_AND:
             {
                 rvalue = parse_unary(p);
             } break;
@@ -822,7 +829,7 @@ static BinaryOperator token_kind_to_binary_operator(TokenKind tk)
 
     // TOK_AND and TOK_DASH are the starting and ending binary operator token kinds
     // if this assertion fails, tk is not a binary token kind
-    ASSERT(tk >= TOK_AND && tk <= TOK_DASH);
+    ASSERT(tk >= TOK_LINE && tk <= TOK_AND);
 
     return map[tk];
 }
