@@ -40,6 +40,7 @@ typedef enum AstNodeKind
     ANK_STRUCT_TYPE,
     ANK_ENUM_TYPE,
     ANK_ROUTINE_LIT,
+    ANK_ROUTINE_TYPE,
 
     // lvalue/rvalue
     ANK_IDENT,
@@ -250,6 +251,13 @@ typedef struct AstNode
             AstNodeList cases;
             AstNodeList case_bodies;
         } match;
+
+        struct
+        {
+            bool is_proc; // is proc or func?
+            AstNodeList param_type_nodes;
+            AstNode* return_type_node; // can be null
+        } routine_type;
     };
 } AstNode;
 
