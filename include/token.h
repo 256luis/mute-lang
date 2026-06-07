@@ -6,9 +6,6 @@
 // The maximum length of a tokenizable symbol
 #define MAX_SYMBOL_LENGTH 256
 
-// The number of reserved symbols recognized by the tokenizer
-#define TOK_RESERVED_SYMBOL_COUNT (TOK_EQUAL + 1)
-
 // Enum containing different token kinds recognized by the tokenizer
 typedef enum TokenKind
 {
@@ -28,6 +25,8 @@ typedef enum TokenKind
     TOK_FOR,
     TOK_MUT,
     TOK_RETURN,
+
+#define TOK_SPECIAL_SYMBOLS_START TOK_LINE
 
     // binary operators
     TOK_LINE,
@@ -65,6 +64,8 @@ typedef enum TokenKind
     TOK_LPAREN, TOK_RPAREN,
     TOK_SEMICOLON,
     TOK_EQUAL,
+
+#define TOK_RESERVED_SYMBOL_COUNT (TOK_EQUAL + 1)
 
     // user defined
     TOK_IDENT,

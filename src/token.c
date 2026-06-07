@@ -47,7 +47,6 @@ void tl_append(TokenList* tl, Token token)
     tl->count++;
 }
 
-#define TOK_SPECIAL_SYMBOLS_START TOK_AND
 static char* reserved_symbols[] = {
     [TOK_FUNC]        = "func",
     [TOK_PROC]        = "proc",
@@ -261,6 +260,7 @@ TokenList tokenize(char* source_code)
                         if(strcmp(symbol_buffer, reserved_symbols[j]) == 0)
                         {
                             is_reserved_symbol = true;
+                            break;
                         }
                     }
 
