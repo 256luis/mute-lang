@@ -383,7 +383,7 @@ static AstNode* parse_type(Parser* p)
                 EXPECT_TOKEN(p, TOK_COLON);
 
                 advance(p);
-                AstNode* member_type_node = parse_rvalue(p);
+                AstNode* member_type_node = parse_type(p);
                 anl_append(&type_node->struct_type.member_type_nodes, *member_type_node);
 
                 advance(p);
@@ -419,7 +419,7 @@ static AstNode* parse_type(Parser* p)
                 if (CHECK_TOKEN(p, TOK_LPAREN))
                 {
                     advance(p);
-                    variant_type_node = parse_rvalue(p);
+                    variant_type_node = parse_type(p);
 
                     advance(p);
                     EXPECT_TOKEN(p, TOK_RPAREN);
@@ -1109,7 +1109,7 @@ static AstNode* parse_stmt(Parser* p)
                 EXPECT_TOKEN(p, TOK_EQUAL);
 
                 advance(p);
-                node->type_decl.type_node = parse_rvalue(p);
+                node->type_decl.type_node = parse_type(p);
 
                 advance(p);
                 EXPECT_TOKEN(p, TOK_SEMICOLON);
