@@ -243,7 +243,7 @@ static AstNode* parse_unary(Parser* p)
 
 static AstNode* parse_lvalue(Parser* p)
 {
-    CHECK_TOKEN(p, LVALUE_STARTERS);
+    EXPECT_TOKEN(p, LVALUE_STARTERS);
     return parse_term(p);
 }
 
@@ -608,6 +608,19 @@ static AstNode* parse_match(Parser* p)
     return node;
 }
 
+static AstNode* parse_field_access(Parser* p, AstNode* owner)
+{
+    AstNode* node = MALLOC(sizeof(AstNode));
+    node->kind = ANK_FIELD_ACCESS;
+    node->field_access.owner = owner;
+
+    advance(p);
+
+    node->field_access.field = parse_lvalue(p);
+
+    return node;
+}
+
 /*
   Parses a single term in an expression. Expressions enclosed in parentheses count
   as a single term.
@@ -628,10 +641,15 @@ static AstNode* parse_term(Parser* p)
     {
         rvalue = parse_array_init(p, NULL);
     }
-    // array initializer with inferred type
+    // struct initializer with inferred type
     else if (CHECK_TOKEN_PATTERN(p, TOK_DOT, TOK_LBRACE))
     {
         rvalue = parse_struct_init(p, NULL);
+    }
+    // field access with inferred type (for enums only)
+    else if (CHECK_TOKEN_PATTERN(p, TOK_DOT, TOK_IDENT))
+    {
+        rvalue = parse_field_access(p, NULL);
     }
     else
     {
@@ -790,14 +808,7 @@ static AstNode* parse_term(Parser* p)
                 // field access
                 case TOK_DOT:
                 {
-                    AstNode* owner = rvalue;
-                    rvalue = MALLOC(sizeof(AstNode));
-                    rvalue->kind = ANK_FIELD_ACCESS;
-                    rvalue->field_access.owner = owner;
-
-                    advance(p);
-
-                    rvalue->field_access.field = parse_lvalue(p);
+                    rvalue = parse_field_access(p, rvalue);
                 } break;
 
                 // routine call
@@ -1276,9 +1287,13 @@ void print_ast_node(AstNode node)
         {
             printf("FIELD ACCESS {");
             depth++;
-            NEWLINE();
-            printf("owner: ");
-            print_ast_node(*node.field_access.owner);
+
+            if ( node.field_access.owner != NULL )
+            {
+                NEWLINE();
+                printf("owner: ");
+                print_ast_node(*node.field_access.owner);
+            }
 
             NEWLINE();
             printf("field: ");

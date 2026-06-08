@@ -41,7 +41,7 @@
   Important to note that this macro is for reporting USER errors, NOT programmer
   errors, use the ASSERT macro for that.
 */
-#define ERROR(...) do { fprintf(stderr, "ERROR: " __VA_ARGS__); exit(1); } while (0)
+#define ERROR(...) do { fprintf(stderr, "ERROR: " __VA_ARGS__); abort(); } while (0)
 
 /*
   Memory management macros to make calls to standard memory allocation functions more

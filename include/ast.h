@@ -140,7 +140,7 @@ typedef struct AstNode
 
         struct
         {
-            AstNode* owner;
+            AstNode* owner; // can be null (enums only)
             AstNode* field;
         } field_access;
 
