@@ -69,3 +69,4 @@ once the program ends.
 | For-loops             |   ✅   |                                  |
 | Compound              |   ✅   |                                  |
 | Implicit returns      |   ✅   |                                  |
+| Module declarations   |   ✅   |                                  |

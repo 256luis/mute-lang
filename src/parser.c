@@ -25,7 +25,7 @@
     TOK_PROC, TOK_FUNC, TOK_AND, TOK_ENUM, TOK_STRUCT, TOK_IDENT, TOK_LBRACKET
 
 #define STATEMENT_STARTERS\
-    TOK_MATCH, TOK_FOR, TOK_TYPE, TOK_WHILE, TOK_RETURN, TOK_CONST, TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
+    TOK_MODULE, TOK_MATCH, TOK_FOR, TOK_TYPE, TOK_WHILE, TOK_RETURN, TOK_CONST, TOK_IDENT, TOK_LET, TOK_IF, TOK_LBRACE
 
 /*
   Macro for more convenient implementation of language grammar. Reports error and
@@ -1125,6 +1125,20 @@ static AstNode* parse_stmt(Parser* p)
                 node = parse_match(p);
             } break;
 
+            case TOK_MODULE:
+            {
+                node = MALLOC(sizeof(AstNode));
+                node->kind = ANK_MODULE_DECL;
+
+                advance(p);
+                EXPECT_TOKEN(p, TOK_IDENT);
+
+                node->module_decl.ident = current_token(p);
+
+                advance(p);
+                EXPECT_TOKEN(p, TOK_SEMICOLON);
+            } break;
+
             default:
             {
                 if (CHECK_TOKEN(p, RVALUE_STARTERS))
@@ -1721,6 +1735,11 @@ void print_ast_node(AstNode node)
             depth--;
             NEWLINE();
             printf("}");
+        } break;
+
+        case ANK_MODULE_DECL:
+        {
+            printf("MODULE DECL: %s", node.module_decl.ident.string);
         } break;
 
         case ANK_NONE:

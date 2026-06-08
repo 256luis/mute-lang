@@ -23,6 +23,7 @@ typedef enum AstNodeKind
     ANK_WHILE,
     ANK_TYPE_DECL,
     ANK_FOR,
+    ANK_MODULE_DECL,
 
     // base/rvalue
     ANK_ROUTINE_CALL,
@@ -265,6 +266,11 @@ typedef struct AstNode
         {
             AstNodeList decls;
         } module;
+
+        struct
+        {
+            Token ident;
+        } module_decl;
     };
 } AstNode;
 
