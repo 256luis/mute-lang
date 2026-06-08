@@ -11,6 +11,8 @@ typedef struct AstNode AstNode;
 // Enum containing the different kinds of nodes based on the language's grammar
 typedef enum AstNodeKind
 {
+    ANK_MODULE,
+
     // base node kinds
     ANK_VARIABLE_DECL,
     ANK_ROUTINE_DECL,
@@ -258,6 +260,11 @@ typedef struct AstNode
             AstNodeList param_type_nodes;
             AstNode* return_type_node; // can be null
         } routine_type;
+
+        struct
+        {
+            AstNodeList decls;
+        } module;
     };
 } AstNode;
 

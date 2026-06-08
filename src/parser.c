@@ -628,7 +628,7 @@ static AstNode* parse_term(Parser* p)
     {
         rvalue = parse_array_init(p, NULL);
     }
-    // struct initializer with inferred type
+    // array initializer with inferred type
     else if (CHECK_TOKEN_PATTERN(p, TOK_DOT, TOK_LBRACE))
     {
         rvalue = parse_struct_init(p, NULL);
@@ -1166,7 +1166,18 @@ AstNode* parse(TokenList tl)
         .index = 0,
     };
 
-    return parse_stmt(&p);
+    AstNode* module = MALLOC(sizeof(AstNode));
+    module->kind = ANK_MODULE;
+    module->module.decls = anl_new();
+
+    while (!CHECK_TOKEN(&p, TOK_EOF))
+    {
+        AstNode* decl = parse_stmt(&p);
+        anl_append(&module->module.decls, *decl);
+        advance(&p);
+    }
+
+    return module;
 }
 
 void print_ast_node(AstNode node)
@@ -1688,6 +1699,23 @@ void print_ast_node(AstNode node)
                 printf("return type: ");
                 print_ast_node(*node.routine_type.return_type_node);
 
+            }
+
+            depth--;
+            NEWLINE();
+            printf("}");
+        } break;
+
+        case ANK_MODULE:
+        {
+            printf("MODULE: {");
+            depth++;
+
+            for (size_t i = 0; i < node.module.decls.count; i++)
+            {
+                NEWLINE();
+                AstNode stmt = node.module.decls.nodes[i];
+                print_ast_node(stmt);
             }
 
             depth--;

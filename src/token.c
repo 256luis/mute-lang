@@ -63,6 +63,7 @@ static char* reserved_symbols[] = {
     [TOK_FOR]         = "for",
     [TOK_MUT]         = "mut",
     [TOK_RETURN]      = "return",
+    [TOK_MODULE]      = "module",
 
     [TOK_LINE]        = "|",
     [TOK_PLUS]        = "+",

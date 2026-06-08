@@ -25,6 +25,7 @@ typedef enum TokenKind
     TOK_FOR,
     TOK_MUT,
     TOK_RETURN,
+    TOK_MODULE,
 
 #define TOK_SPECIAL_SYMBOLS_START TOK_LINE
 

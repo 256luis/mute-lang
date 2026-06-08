@@ -1,7 +1,7 @@
 # Mute
 C-like programming language
 ```
-routine main = func() {
+const main = func() {
     echo "Hello, World!";
 }
 ```
